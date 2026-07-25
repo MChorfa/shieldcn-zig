@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="101" height="92" role="img" aria-label="badge group">
+  <title>badge group</title>
+  <g transform="translate(0,0)">
+    <clipPath id="r_0">
+      <rect width="101" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r_0)">
+    <rect width="44" height="28" fill="#27272a"/>
+    <rect x="44" width="57" height="28" fill="#97ca00"/>
+    <rect x="44" width="1" height="28" fill="#000000" opacity="0.15"/>
+    <text x="10.0" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">build</text>
+    <text x="47.2" y="18.2" fill="#18181b" font-family="Inter, sans-serif" font-size="12" font-weight="500">passing</text>
+    </g>
+  </g>
+  <g transform="translate(0,32)">
+    <clipPath id="r_1">
+      <rect width="94" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r_1)">
+    <rect width="63" height="28" fill="#27272a"/>
+    <rect x="63" width="31" height="28" fill="#007ec6"/>
+    <rect x="63" width="1" height="28" fill="#000000" opacity="0.15"/>
+    <text x="10.0" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">coverage</text>
+    <text x="65.9" y="18.2" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="500">92%</text>
+    </g>
+  </g>
+  <g transform="translate(0,64)">
+    <clipPath id="r_2">
+      <rect width="92" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r_2)">
+    <rect width="57" height="28" fill="#27272a"/>
+    <rect x="57" width="35" height="28" fill="#fe7d37"/>
+    <rect x="57" width="1" height="28" fill="#000000" opacity="0.15"/>
+    <text x="10.0" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">license</text>
+    <text x="59.7" y="18.2" fill="#18181b" font-family="Inter, sans-serif" font-size="12" font-weight="500">MIT</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>shieldcn-zig — Badge Engine</title>
+<meta name="description" content="Pure-Zig badge engine with SVG/PNG/JSON output, 6 visual variants, multi-provider support, and SLSA Level 3 CI/CD.">
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-grad: #0a0a0c;
+    --surface: #18181b;
+    --surface-hover: #1f1f23;
+    --surface2: #27272a;
+    --border: #27272a;
+    --border-bright: #3f3f46;
+    --fg: #fafafa;
+    --fg-dim: #d4d4d8;
+    --muted: #71717a;
+    --muted2: #52525b;
+    --accent: #22c55e;
+    --accent-dim: #16a34a;
+    --accent2: #3b82f6;
+    --code-bg: #0c0c0e;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.4), 0 3px 10px rgba(0,0,0,0.3);
+    --mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, 'Helvetica Neue', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ---- Sticky nav ---- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(9, 9, 11, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  nav .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  nav .brand {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  nav .brand .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  nav .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+  nav .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  nav .nav-links a:hover { color: var(--fg); }
+
+  /* ---- Hero ---- */
+  .hero {
+    text-align: center;
+    padding: 5rem 2rem 4rem;
+    background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(34, 197, 94, 0.08) 0%, transparent 70%);
+  }
+  .hero h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero .tagline {
+    color: var(--muted);
+    font-size: 1.15rem;
+    margin-top: 1rem;
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+  .hero .badges {
+    margin-top: 2rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero .meta {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero .meta .stat {
+    text-align: center;
+  }
+  .hero .meta .stat .num {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--fg);
+    font-family: var(--mono);
+  }
+  .hero .meta .stat .label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.2rem;
+  }
+
+  /* ---- Main content ---- */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+  }
+  section {
+    margin-bottom: 4rem;
+    scroll-margin-top: 72px;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-header .num {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .section-header h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .section-desc {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 1.5rem;
+    max-width: 640px;
+  }
+  .subsection-label {
+    font-size: 0.78rem;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin: 2rem 0 1rem;
+  }
+
+  /* ---- Grids ---- */
+  .grid {
+    display: grid;
+    gap: 1rem;
+  }
+  .grid-2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+  /* ---- Cards ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover {
+    border-color: var(--border-bright);
+  }
+  .card .card-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.85rem;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+  .card .badge-display {
+    background: var(--code-bg);
+    border-radius: var(--radius-sm);
+    padding: 1.2rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+  }
+  .card .badge-display.light {
+    background: #f4f4f5;
+  }
+  .card .badge-display.checker {
+    background-image:
+      linear-gradient(45deg, #1a1a1d 25%, transparent 25%),
+      linear-gradient(-45deg, #1a1a1d 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1a1a1d 75%),
+      linear-gradient(-45deg, transparent 75%, #1a1a1d 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+  .card img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  .card .card-url {
+    margin-top: 0.85rem;
+    font-size: 0.72rem;
+    color: var(--muted2);
+    font-family: var(--mono);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+  .card .card-url .key { color: var(--accent2); }
+
+  /* ---- Code blocks ---- */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.83rem;
+    line-height: 1.65;
+    color: var(--fg-dim);
+  }
+  pre .c { color: #52525b; }
+  pre .k { color: var(--accent2); }
+  pre .s { color: var(--accent); }
+  pre .n { color: #d4d4d8; }
+
+  /* ---- Tables ---- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    background: var(--surface);
+  }
+  td code {
+    background: var(--surface2);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  /* ---- Pills ---- */
+  .pill {
+    display: inline-block;
+    padding: 0.18rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pill.done { background: rgba(34,197,94,0.12); color: var(--accent); border: 1px solid rgba(34,197,94,0.2); }
+
+  /* ---- JSON block ---- */
+  .json-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    overflow-x: auto;
+    color: var(--fg-dim);
+  }
+  .json-block .jk { color: var(--accent2); }
+  .json-block .jv { color: var(--accent); }
+
+  /* ---- Architecture tree ---- */
+  .arch-tree {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: var(--fg-dim);
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+  }
+  .arch-tree .dir { color: var(--accent2); font-weight: 600; }
+  .arch-tree .c { color: var(--muted); }
+
+  /* ---- Footer ---- */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  footer a { color: var(--accent2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2.2rem; }
+    .hero .tagline { font-size: 1rem; }
+    .hero .meta { gap: 1.5rem; }
+    nav .nav-links { display: none; }
+    main { padding: 0 1rem 3rem; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="brand"><span class="dot"></span> shieldcn-zig</a>
+    <ul class="nav-links">
+      <li><a href="#variants">Variants</a></li>
+      <li><a href="#colors">Colors</a></li>
+      <li><a href="#sizes">Sizes</a></li>
+      <li><a href="#themes">Themes</a></li>
+      <li><a href="#formats">Formats</a></li>
+      <li><a href="#groups">Groups</a></li>
+      <li><a href="#providers">Providers</a></li>
+      <li><a href="#api">API</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>shieldcn<span class="accent">-zig</span></h1>
+  <p class="tagline">
+    A pure-Zig badge engine with SVG, PNG, and JSON output.
+    No external rendering dependencies. SLSA Level 3 CI/CD.
+  </p>
+  <div class="badges">
+    <img src="badges/build-passing-green.svg" alt="build passing">
+    <img src="badges/coverage-92%25-blue.svg" alt="coverage 92%">
+    <img src="badges/license-MIT-orange.svg" alt="license MIT">
+    <img src="badges/version-1.0.0-blueviolet.svg" alt="version 1.0.0">
+  </div>
+  <div class="meta">
+    <div class="stat"><div class="num">6</div><div class="label">Variants</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">Sizes</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Themes</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">Providers</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">Dependencies</div></div>
+  </div>
+</div>
+
+<main>
+
+<!-- ================================================================ -->
+<section id="variants">
+  <div class="section-header"><span class="num">01</span><h2>Visual Variants</h2></div>
+  <p class="section-desc">
+    Six shadcn-button-inspired styles via <code style="color:var(--accent)">?variant=</code>.
+    Each produces a visually distinct badge from the same URL path.
+  </p>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-label">variant=default</div>
+      <div class="badge-display"><img src="badges/var-default.svg" alt="default variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=default</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">variant=secondary</div>
+      <div class="badge-display"><img src="badges/var-secondary.svg" alt="secondary variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=secondary</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">variant=outline</div>
+      <div class="badge-display"><img src="badges/var-outline.svg" alt="outline variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=outline</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">variant=ghost</div>
+      <div class="badge-display"><img src="badges/var-ghost.svg" alt="ghost variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=ghost</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">variant=destructive</div>
+      <div class="badge-display"><img src="badges/var-destructive.svg" alt="destructive variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=destructive</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">variant=branded</div>
+      <div class="badge-display"><img src="badges/var-branded.svg" alt="branded variant"></div>
+      <div class="card-url">/badge/build-passing-green.svg?<span class="key">variant=branded</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="colors">
+  <div class="section-header"><span class="num">02</span><h2>Named Colors</h2></div>
+  <p class="section-desc">
+    Standard shields.io named colors in the URL path. The label section
+    is neutral gray; the value section carries the named color with
+    auto-contrast text (white on dark colors, dark on light colors).
+  </p>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-label">green</div><div class="badge-display"><img src="badges/color-green.svg" alt="green"></div><div class="card-url">/badge/build-passing-<span class="key">green</span>.svg</div></div>
+    <div class="card"><div class="card-label">red</div><div class="badge-display"><img src="badges/color-red.svg" alt="red"></div><div class="card-url">/badge/build-failing-<span class="key">red</span>.svg</div></div>
+    <div class="card"><div class="card-label">yellow</div><div class="badge-display"><img src="badges/color-yellow.svg" alt="yellow"></div><div class="card-url">/badge/build-pending-<span class="key">yellow</span>.svg</div></div>
+    <div class="card"><div class="card-label">blue</div><div class="badge-display"><img src="badges/color-blue.svg" alt="blue"></div><div class="card-url">/badge/coverage-92%25-<span class="key">blue</span>.svg</div></div>
+    <div class="card"><div class="card-label">blueviolet</div><div class="badge-display"><img src="badges/color-blueviolet.svg" alt="blueviolet"></div><div class="card-url">/badge/version-1.0.0-<span class="key">blueviolet</span>.svg</div></div>
+    <div class="card"><div class="card-label">orange</div><div class="badge-display"><img src="badges/color-orange.svg" alt="orange"></div><div class="card-url">/badge/license-MIT-<span class="key">orange</span>.svg</div></div>
+  </div>
+
+  <div class="subsection-label">Custom Hex Colors</div>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-label">?color=#ff00ff</div><div class="badge-display"><img src="badges/custom-color.svg" alt="custom magenta"></div><div class="card-url">?color=%23ff00ff</div></div>
+    <div class="card"><div class="card-label">?labelColor=#0000ff</div><div class="badge-display"><img src="badges/custom-label-color.svg" alt="custom label blue"></div><div class="card-url">?labelColor=%230000ff</div></div>
+    <div class="card"><div class="card-label">?valueColor=#ffffff</div><div class="badge-display"><img src="badges/custom-value-color.svg" alt="custom value white"></div><div class="card-url">?valueColor=%23ffffff</div></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="sizes">
+  <div class="section-header"><span class="num">03</span><h2>Sizes</h2></div>
+  <p class="section-desc">Four presets via <code style="color:var(--accent)">?size=</code>.</p>
+  <div class="grid grid-4">
+    <div class="card"><div class="card-label">size=xs</div><div class="badge-display"><img src="badges/size-xs.svg" alt="xs"></div><div class="card-url">?size=xs</div></div>
+    <div class="card"><div class="card-label">size=sm</div><div class="badge-display"><img src="badges/size-sm.svg" alt="sm"></div><div class="card-url">?size=sm</div></div>
+    <div class="card"><div class="card-label">size=default</div><div class="badge-display"><img src="badges/size-default.svg" alt="default"></div><div class="card-url">?size=default</div></div>
+    <div class="card"><div class="card-label">size=lg</div><div class="badge-display"><img src="badges/size-lg.svg" alt="lg"></div><div class="card-url">?size=lg</div></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="themes">
+  <div class="section-header"><span class="num">04</span><h2>Themes &amp; Color Modes</h2></div>
+  <p class="section-desc">
+    Color modes (<code style="color:var(--accent)">?mode=</code>) swap the
+    neutral palette. Themes (<code style="color:var(--accent)">?theme=</code>)
+    override the entire palette including accent and destructive colors.
+  </p>
+
+  <div class="subsection-label">Color Modes</div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-label">mode=dark</div><div class="badge-display"><img src="badges/mode-dark.svg" alt="dark mode"></div><div class="card-url">?mode=dark</div></div>
+    <div class="card"><div class="card-label">mode=light</div><div class="badge-display light"><img src="badges/mode-light.svg" alt="light mode"></div><div class="card-url">?mode=light</div></div>
+  </div>
+
+  <div class="subsection-label">Themes</div>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-label">theme=dark</div><div class="badge-display"><img src="badges/theme-dark.svg" alt="dark theme"></div><div class="card-url">?theme=dark</div></div>
+    <div class="card"><div class="card-label">theme=light</div><div class="badge-display light"><img src="badges/theme-light.svg" alt="light theme"></div><div class="card-url">?theme=light</div></div>
+    <div class="card"><div class="card-label">theme=high-contrast</div><div class="badge-display"><img src="badges/theme-high-contrast.svg" alt="high contrast theme"></div><div class="card-url">?theme=high-contrast</div></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="fonts">
+  <div class="section-header"><span class="num">05</span><h2>Fonts</h2></div>
+  <p class="section-desc">Three font families via <code style="color:var(--accent)">?font=</code>.</p>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-label">font=inter</div><div class="badge-display"><img src="badges/font-inter.svg" alt="inter"></div><div class="card-url">?font=inter</div></div>
+    <div class="card"><div class="card-label">font=geist</div><div class="badge-display"><img src="badges/font-geist.svg" alt="geist"></div><div class="card-url">?font=geist</div></div>
+    <div class="card"><div class="card-label">font=geist-mono</div><div class="badge-display"><img src="badges/font-geist-mono.svg" alt="geist mono"></div><div class="card-url">?font=geist-mono</div></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="options">
+  <div class="section-header"><span class="num">06</span><h2>Layout Options</h2></div>
+  <p class="section-desc">Split mode, status dots, gradients, and custom labels.</p>
+  <div class="grid grid-4">
+    <div class="card"><div class="card-label">split=true</div><div class="badge-display"><img src="badges/split.svg" alt="split"></div><div class="card-url">?split=true</div></div>
+    <div class="card"><div class="card-label">statusDot=true</div><div class="badge-display"><img src="badges/status-dot.svg" alt="status dot"></div><div class="card-url">?statusDot=true</div></div>
+    <div class="card"><div class="card-label">gradient=blue</div><div class="badge-display"><img src="badges/gradient.svg" alt="gradient"></div><div class="card-url">?gradient=blue</div></div>
+    <div class="card"><div class="card-label">label=CI</div><div class="badge-display"><img src="badges/custom-label.svg" alt="custom label"></div><div class="card-url">?label=CI</div></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="formats">
+  <div class="section-header"><span class="num">07</span><h2>Output Formats</h2></div>
+  <p class="section-desc">
+    SVG (direct XML emission), PNG (pure-Zig rasterizer, no libpng),
+    and JSON. All three from the same URL — just change the extension.
+  </p>
+
+  <div class="subsection-label">SVG</div>
+  <div class="card" style="max-width:400px">
+    <div class="badge-display"><img src="badges/color-green.svg" alt="svg sample"></div>
+    <div class="card-url">/badge/build-passing-green.svg</div>
+  </div>
+
+  <div class="subsection-label">PNG (pure-Zig rasterizer)</div>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-label">PNG — green</div><div class="badge-display"><img src="badges/png-sample.png" alt="png green"></div><div class="card-url">/badge/build-passing-green.png</div></div>
+    <div class="card"><div class="card-label">PNG — red</div><div class="badge-display"><img src="badges/png-red.png" alt="png red"></div><div class="card-url">/badge/build-failing-red.png</div></div>
+    <div class="card"><div class="card-label">PNG — blue</div><div class="badge-display"><img src="badges/png-blue.png" alt="png blue"></div><div class="card-url">/badge/coverage-92%25-blue.png</div></div>
+  </div>
+
+  <div class="subsection-label">JSON</div>
+  <div class="card" style="max-width:500px">
+    <div class="card-label">/badge/build-passing-green.json</div>
+    <div class="json-block">{"<span class="jk">label</span>":"<span class="jv">build</span>","<span class="jk">message</span>":"<span class="jv">passing</span>","<span class="jk">color</span>":"<span class="jv">#97ca00</span>","<span class="jk">labelColor</span>":"<span class="jv">#27272a</span>"}</div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="groups">
+  <div class="section-header"><span class="num">08</span><h2>Badge Groups</h2></div>
+  <p class="section-desc">
+    Stack N static badges vertically into one SVG via
+    <code style="color:var(--accent)">/group/spec|spec|....svg</code>.
+    Each sub-spec follows the static badge form <code>label-message-color</code>.
+  </p>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-label">2 badges</div>
+      <div class="badge-display"><img src="badges/group-2.svg" alt="group of 2"></div>
+      <div class="card-url">/group/build-passing-green|coverage-92%25-blue.svg</div>
+    </div>
+    <div class="card">
+      <div class="card-label">3 badges</div>
+      <div class="badge-display"><img src="badges/group-3.svg" alt="group of 3"></div>
+      <div class="card-url">/group/build-passing-green|coverage-92%25-blue|license-MIT-orange.svg</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="providers">
+  <div class="section-header"><span class="num">09</span><h2>Providers</h2></div>
+  <p class="section-desc">Six providers covering static badges, package registries, Git platforms, and user-defined memo badges.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Provider</th><th>Path Pattern</th><th>Metrics</th><th>Network</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>badge</code></td><td><code>/badge/label-value-color.svg</code></td><td>static</td><td>No</td></tr>
+        <tr><td><code>npm</code></td><td><code>/npm/package.svg</code></td><td>version, downloads, license</td><td>Yes</td></tr>
+        <tr><td><code>github</code></td><td><code>/github/metric/owner/repo.svg</code></td><td>stars, forks, issues, pulls, release, commits, contributors</td><td>Yes</td></tr>
+        <tr><td><code>gitlab</code></td><td><code>/gitlab/metric/owner/repo.svg</code></td><td>stars, forks, issues, merge-requests, pipeline</td><td>Yes</td></tr>
+        <tr><td><code>memo</code></td><td><code>/memo/key.svg</code></td><td>user-defined (GET + PUT)</td><td>No</td></tr>
+        <tr><td><code>group</code></td><td><code>/group/spec|spec.svg</code></td><td>stacked static badges</td><td>No</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="api">
+  <div class="section-header"><span class="num">10</span><h2>Query Parameters</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Param</th><th>Values</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td><code>variant</code></td><td>default, secondary, outline, ghost, destructive, branded</td><td>default</td></tr>
+        <tr><td><code>size</code></td><td>xs, sm, default, lg</td><td>sm</td></tr>
+        <tr><td><code>mode</code></td><td>dark, light</td><td>dark</td></tr>
+        <tr><td><code>theme</code></td><td>dark, light, high-contrast, enterprise, custom</td><td>dark</td></tr>
+        <tr><td><code>font</code></td><td>inter, geist, geist-mono</td><td>inter</td></tr>
+        <tr><td><code>color</code></td><td>named or #hex</td><td>from path</td></tr>
+        <tr><td><code>labelColor</code></td><td>named or #hex</td><td>theme</td></tr>
+        <tr><td><code>valueColor</code></td><td>named or #hex</td><td>auto-contrast</td></tr>
+        <tr><td><code>label</code></td><td>string</td><td>from path</td></tr>
+        <tr><td><code>split</code></td><td>true, false</td><td>auto (true when color present)</td></tr>
+        <tr><td><code>statusDot</code></td><td>true, false</td><td>false</td></tr>
+        <tr><td><code>gradient</code></td><td>color name</td><td>null</td></tr>
+        <tr><td><code>labelOpacity</code></td><td>float 0–1</td><td>0.85</td></tr>
+        <tr><td><code>height</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>font_size</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>radius</code></td><td>px</td><td>preset</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="audit">
+  <div class="section-header"><span class="num">11</span><h2>Audit Logging</h2></div>
+  <p class="section-desc">
+    Every HTTP request emits one audit line to stderr. Runtime path uses
+    <code style="color:var(--accent)">std.log.info</code> with a compact
+    space-delimited format. Full JSON available via
+    <code style="color:var(--accent)">formatRecord()</code>.
+  </p>
+  <div class="subsection-label">Runtime stderr output</div>
+  <pre>info: 737716767222000 GET /badge/build-passing-green.svg 200 1516
+info: 737717089776000 GET /badge/build-passing-green.png 200 2823
+info: 737717408621000 GET /group/build-passing-green|coverage-92%25-blue.svg 200 1734
+info: 737718048495000 GET /health 200 17
+info: 737718371596000 POST /health 405 14</pre>
+  <div class="subsection-label">Full JSON (via formatRecord)</div>
+  <div class="json-block">{"<span class="jk">ts_ns</span>":<span class="jv">1753674280123456789</span>,"<span class="jk">method</span>":"<span class="jv">GET</span>","<span class="jk">path</span>":"<span class="jv">/badge/build-passing-green.svg</span>","<span class="jk">provider</span>":"<span class="jv">badge</span>","<span class="jk">format</span>":"<span class="jv">svg</span>","<span class="jk">status</span>":<span class="jv">200</span>,"<span class="jk">latency_us</span>":<span class="jv">42</span>,"<span class="jk">cache_hit</span>":<span class="jv">false</span>}</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="architecture">
+  <div class="section-header"><span class="num">12</span><h2>Architecture</h2></div>
+  <div class="arch-tree">
+<span class="dir">src/</span>
+  <span class="dir">core/</span>        types, errors
+  <span class="dir">render/</span>      SVG builder, themes, tokens, measurement, PNG rasterizer, group composer
+  <span class="dir">icons/</span>       (planned) SimpleIcons, custom SVG
+  <span class="dir">providers/</span>   fetch layer, npm, static, github, gitlab
+  <span class="dir">server/</span>      HTTP server, router, params
+  <span class="dir">cache/</span>       LRU, backoff
+  <span class="dir">net/</span>         egress allowlist
+  <span class="dir">db/</span>          token pool, memo store
+  <span class="dir">util/</span>        hex colors, number formatting, structured audit logging
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="compliance">
+  <div class="section-header"><span class="num">13</span><h2>CKODEX / CSR Compliance</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Control</th><th>Status</th><th>Implementation</th></tr></thead>
+      <tbody>
+        <tr><td>Egress allowlist</td><td><span class="pill done">Done</span></td><td><code>src/net/egress.zig</code></td></tr>
+        <tr><td>No hardcoded secrets</td><td><span class="pill done">Done</span></td><td><code>src/providers/fetch.zig</code> loads from env</td></tr>
+        <tr><td>TLS enforcement</td><td><span class="pill done">Done</span></td><td>All fetches via <code>std.http.Client</code></td></tr>
+        <tr><td>Backoff + circuit breaker</td><td><span class="pill done">Done</span></td><td><code>src/cache/backoff.zig</code></td></tr>
+        <tr><td>Structured audit logging</td><td><span class="pill done">Done</span></td><td><code>src/util/audit.zig</code></td></tr>
+        <tr><td>SLSA Level 3</td><td><span class="pill done">Done</span></td><td>Dagger CI + Sigstore signing</td></tr>
+        <tr><td>Multi-arch builds</td><td><span class="pill done">Done</span></td><td>amd64, aarch64</td></tr>
+        <tr><td>SBOM generation</td><td><span class="pill done">Done</span></td><td>apko + cosign attest</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="build">
+  <div class="section-header"><span class="num">14</span><h2>Build &amp; Run</h2></div>
+  <pre>zig build                    <span class="c"># compile</span>
+zig build test              <span class="c"># run all tests</span>
+zig build run -- serve      <span class="c"># start server on 127.0.0.1:5335</span>
+zig build run -- serve --host 0.0.0.0 --port 5335</pre>
+  <div class="subsection-label">Quick requests</div>
+  <pre>curl http://localhost:5335/badge/build-passing-green.svg
+curl http://localhost:5335/badge/build-passing-green.png
+curl http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg
+curl http://localhost:5335/npm/react.svg?variant=branded
+curl http://localhost:5335/github/ziglang/zig/stars.svg
+curl http://localhost:5335/health</pre>
+</section>
+
+<!-- ================================================================ -->
+<section id="status">
+  <div class="section-header"><span class="num">15</span><h2>Project Status</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Phase</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Core SVG rendering (6 variants)</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Text measurement + layout</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Theme resolution (dark/light)</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>HTTP server + router</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Static badge provider</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>npm provider</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>GitLab provider</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>GitHub provider</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Egress allowlist</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Per-provider backoff</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>In-memory LRU cache</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Token pool + SQLite</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Memo badges (GET + PUT)</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Dagger CI/CD</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>SLSA Level 3</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Multi-arch builds</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>OCI image (melange + apko)</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Sigstore signing</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Structured audit logging</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>PNG rasterization</td><td><span class="pill done">Done</span></td></tr>
+        <tr><td>Badge groups</td><td><span class="pill done">Done</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>shieldcn-zig &middot; MIT License &middot; <a href="https://github.com/jal-co/shieldcn-zig">GitHub</a></p>
+</footer>
+
+</body>
+</html>

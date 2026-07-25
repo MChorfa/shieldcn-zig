@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="101" height="28" role="img" aria-label="build passing">
+  <title>build passing</title>
+  <g transform="translate(0,0)">
+    <clipPath id="r">
+      <rect width="101" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r)">
+    <rect width="44" height="28" fill="#fafafa"/>
+    <rect x="44" width="57" height="28" fill="#97ca00"/>
+    <rect x="44" width="1" height="28" fill="#000000" opacity="0.15"/>
+    <text x="10.0" y="18.2" fill="#18181b" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">build</text>
+    <text x="47.2" y="18.2" fill="#18181b" font-family="Inter, sans-serif" font-size="12" font-weight="500">passing</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,71 @@
+name: Dagger CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dagger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Install Dagger CLI
+        run: |
+          cd /usr/local
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
+          cd -
+
+      - name: Cache Zig dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/zig
+            zig-cache
+            zig-out
+          key: ${{ runner.os }}-zig-${{ hashFiles('**/*.zig', 'build.zig.zon') }}
+          restore-keys: |
+            ${{ runner.os }}-zig-
+
+      - name: Fetch dependencies
+        run: zig fetch
+
+      - name: Dagger Lint
+        run: dagger call lint --source=.
+
+      - name: Dagger Test
+        run: dagger call test --source=.
+
+      - name: Dagger Build (amd64)
+        run: dagger call build --source=. --output=./build-amd64
+
+      - name: Dagger Build (aarch64)
+        run: dagger call buildAarch64 --source=. --output=./build-aarch64
+
+      - name: Dagger Container (amd64)
+        run: dagger call container --source=. --arch=amd64 --export=./shieldcn-amd64.tar
+
+      - name: Dagger Container (aarch64)
+        run: dagger call container --source=. --arch=aarch64 --export=./shieldcn-aarch64.tar
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            ./build-amd64
+            ./build-aarch64
+            ./shieldcn-amd64.tar
+            ./shieldcn-aarch64.tar

@@ -1,0 +1,27 @@
+# Zig build artifacts
+zig-cache/
+.zig-cache/
+zig-out/
+zig-pkg/
+
+# Dagger
+.dagger/
+dagger-test-build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Agent tool-local state
+.devin/
+.windsurf/
+
+# Test artifacts
+*.tmp
+*.log

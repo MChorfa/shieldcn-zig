@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Install Dagger CLI
+        run: |
+          cd /usr/local
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
+          cd -
+
+      - name: Install melange + apko
+        uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Cache Zig dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/zig
+            zig-cache
+            zig-out
+          key: ${{ runner.os }}-zig-${{ hashFiles('**/*.zig', 'build.zig.zon') }}
+          restore-keys: |
+            ${{ runner.os }}-zig-
+
+      - name: Fetch dependencies
+        run: zig fetch
+
+      - name: Dagger Lint
+        run: dagger call lint --source=.
+
+      - name: Dagger Test
+        run: dagger call test --source=.
+
+      - name: Build APK with melange (amd64)
+        run: |
+          melange build melange.yaml \
+            --arch x86_64 \
+            --out-dir packages/
+
+      - name: Build APK with melange (aarch64)
+        run: |
+          melange build melange.yaml \
+            --arch aarch64 \
+            --out-dir packages/
+
+      - name: Build OCI image with apko
+        run: |
+          apko build apko.yaml \
+            shieldcn:${{ github.ref_name }} \
+            apko.tar \
+            --arch x86_64,aarch64 \
+            --repository-append packages/
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Publish to GHCR
+        run: |
+          apko publish apko.yaml \
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
+            ghcr.io/${{ github.repository }}:latest \
+            --arch x86_64,aarch64 \
+            --repository-append packages/
+
+      - name: Sign OCI image with cosign
+        run: |
+          cosign sign \
+            --yes \
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+
+      - name: Sign OCI image latest with cosign
+        run: |
+          cosign sign \
+            --yes \
+            ghcr.io/${{ github.repository }}:latest
+
+      - name: Generate SBOM
+        run: |
+          apko sbom apko.yaml \
+            --arch x86_64,aarch64 \
+            --repository-append packages/ \
+            --sbom-formats spdx-json \
+            --output sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            packages/shieldcn-*.apk
+            sbom.spdx.json
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SLSA Provenance
+        uses: slsa-framework/slsa-github-generator@v2
+        with:
+          artifact: packages/shieldcn-*.apk
+          output-name: provenance.intoto.jsonl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SLSA Provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance
+          path: provenance.intoto.jsonl
+
+      - name: Attach SLSA Provenance to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: provenance.intoto.jsonl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

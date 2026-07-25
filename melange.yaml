@@ -1,0 +1,30 @@
+package:
+  name: shieldcn
+  version: 0.1.0
+  epoch: 0
+  description: shields.io alternative — self-hosted badge server in Zig
+  copyright:
+    - license: MIT
+
+environment:
+  contents:
+    repositories:
+      - https://dl-cdn.alpinelinux.org/alpine/v3.20/main
+      - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
+    packages:
+      - alpine-baselayout-data
+      - build-base
+      - zig
+      - freetype-dev
+      - sqlite-dev
+
+pipeline:
+  - runs: |
+      # Build static binary targeting musl
+      # melange sets ARCH environment variable (x86_64 or aarch64)
+      zig build -Doptimize=ReleaseFast -Dtarget=${{target.arch}}-linux-musl
+
+  - runs: |
+      install -Dm755 zig-out/bin/shieldcn "${{targets.destdir}}"/usr/bin/shieldcn
+
+  - uses: strip

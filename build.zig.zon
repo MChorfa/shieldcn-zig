@@ -1,0 +1,27 @@
+.{
+    .name = .shieldcn,
+    .version = "0.1.0",
+    .fingerprint = 0x5b79b24b9e928d4a,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .zigimg = .{
+            .url = "git+https://github.com/zigimg/zigimg#master",
+            .hash = "zigimg-0.1.0-8_eo2sGbFwCrsBjkTTP-kinCH62m5vmYDHQnQcngFuwh",
+        },
+        .dagger_sdk = .{
+            .url = "git+https://github.com/MChorfa/dagger-zig#v0.3.5",
+            .hash = "dagger_sdk-0.3.4-LXrZ7FWNCgBa6zYWe2Fv253MHYG6xkSNFGjWb-WjrBF7",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "fonts",
+        "icons",
+        "docs",
+        "tests",
+        "README.md",
+        "LICENSE",
+    },
+}
