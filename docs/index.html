@@ -480,84 +480,36 @@
   .arch-tree .dir { color: var(--accent2); font-weight: 600; }
   .arch-tree .c { color: var(--muted); }
 
-  /* ---- Evidence margin ---- */
-  .evidence-margin {
-    position: fixed;
-    top: 88px;
-    right: 0;
-    width: 280px;
-    max-height: calc(100vh - 112px);
-    overflow-y: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-right: none;
-    border-radius: var(--radius) 0 0 var(--radius);
-    padding: 1.5rem;
-    padding-left: 3.25rem;
-    backdrop-filter: blur(10px);
+  /* ---- Authority / Evidence footer ---- */
+  .authority-footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.2));
+    padding: 3rem 2rem 3.5rem;
     font-family: var(--mono);
     font-size: 0.78rem;
     line-height: 1.55;
-    z-index: 100;
-    transform: translateX(236px);
-    transition: transform 0.3s var(--ease), border-radius 0.3s;
   }
-  .evidence-margin.expanded {
-    transform: translateX(0);
-    border-radius: var(--radius) 0 0 var(--radius);
+  .authority-inner {
+    max-width: 1200px;
+    margin: 0 auto;
   }
-  .evidence-header {
-    position: relative;
-    margin-bottom: 1.25rem;
+  .authority-title {
+    font-family: var(--display);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.75rem;
   }
-  .evidence-title {
-    font-family: var(--display);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
+  .authority-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
   }
-  .evidence-toggle {
-    position: absolute;
-    left: -2.25rem;
-    top: -0.25rem;
-    width: 32px;
-    height: 32px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--fg);
-    font-family: var(--mono);
-    font-size: 0.95rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .evidence-toggle:hover { border-color: var(--accent); color: var(--accent); }
-  .evidence-toggle .open { display: inline; }
-  .evidence-toggle .close { display: none; }
-  .evidence-margin.expanded .evidence-toggle .open { display: none; }
-  .evidence-margin.expanded .evidence-toggle .close { display: inline; }
-  .evidence-collapsed-label {
-    display: none;
-    position: absolute;
-    left: -1.85rem;
-    top: 2.5rem;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    color: var(--muted);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .evidence-margin:not(.expanded) .evidence-collapsed-label { display: block; }
-  .evidence-margin:not(.expanded) .evidence-title,
-  .evidence-margin:not(.expanded) .evidence-body { display: none; }
   .receipt {
     margin-bottom: 1.1rem;
     padding-left: 0.85rem;
@@ -624,18 +576,8 @@
       padding: 0 1.25rem 3rem;
     }
     main { padding: 0 0 2rem; }
-    .evidence-margin {
-      position: static;
-      width: 100%;
-      transform: none;
-      border-right: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding-left: 1.5rem;
-      margin-top: 2rem;
-    }
-    .evidence-header { position: static; }
-    .evidence-toggle, .evidence-collapsed-label { display: none !important; }
-    .evidence-title, .evidence-body { display: block !important; }
+    .authority-footer { padding: 2rem 1.25rem 2.5rem; }
+    .authority-grid { grid-template-columns: 1fr; }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     pre { padding: 1.1rem; font-size: 0.78rem; }
   }
@@ -1113,39 +1055,33 @@ dagger call container --arch=aarch64 publish ghcr.io/mchorfa/shieldcn-zig:latest
 </main>
 </div>
 
-<aside class="evidence-margin" aria-label="Evidence margin" id="evidence-margin">
-  <div class="evidence-header">
-    <button class="evidence-toggle" aria-expanded="false" aria-controls="evidence-body" title="Toggle evidence margin">
-      <span class="open" aria-hidden="true">⊳</span>
-      <span class="close" aria-hidden="true">⊲</span>
-    </button>
-    <div class="evidence-title">Evidence margin</div>
-    <div class="evidence-collapsed-label">Evidence</div>
-  </div>
+<section class="authority-footer" aria-label="Authority and evidence">
+  <div class="authority-inner">
+    <div class="authority-title">Authority &amp; Evidence</div>
+    <div class="authority-grid">
+      <div class="receipt">
+        <div class="receipt-time">2026-07-26T22:32:52Z</div>
+        <div class="receipt-event">generated · site artifact</div>
+        <div class="receipt-detail">deployed by GitHub Actions</div>
+      </div>
 
-  <div class="evidence-body" id="evidence-body">
-    <div class="receipt">
-      <div class="receipt-time">2026-07-26T22:32:52Z</div>
-      <div class="receipt-event">generated · site artifact</div>
-      <div class="receipt-detail">deployed by GitHub Actions</div>
-    </div>
+      <div class="receipt">
+        <div class="receipt-time">2026-07-26T22:33:07Z</div>
+        <div class="receipt-event">exported · GitHub Pages</div>
+        <div class="receipt-detail">https://mchorfa.github.io/shieldcn-zig/</div>
+      </div>
 
-    <div class="receipt">
-      <div class="receipt-time">2026-07-26T22:33:07Z</div>
-      <div class="receipt-event">exported · GitHub Pages</div>
-      <div class="receipt-detail">https://mchorfa.github.io/shieldcn-zig/</div>
-    </div>
+      <div class="receipt receipt--proof">
+        <div class="receipt-time">2026-07-26T03:14:39Z</div>
+        <div class="receipt-event">attested · CKODEX / CSR</div>
+        <div class="receipt-detail">evidence/bundle.json</div>
+      </div>
 
-    <div class="receipt receipt--proof">
-      <div class="receipt-time">2026-07-26T03:14:39Z</div>
-      <div class="receipt-event">attested · CKODEX / CSR</div>
-      <div class="receipt-detail">evidence/bundle.json</div>
-    </div>
-
-    <div class="receipt">
-      <div class="receipt-time">—</div>
-      <div class="receipt-event">approved · MIT License</div>
-      <div class="receipt-detail">permissive open source</div>
+      <div class="receipt">
+        <div class="receipt-time">—</div>
+        <div class="receipt-event">approved · MIT License</div>
+        <div class="receipt-detail">permissive open source</div>
+      </div>
     </div>
 
     <div class="stamp" title="sha256:948c6a01374922f8611279c522e44b88df950ed35daf9c55082838e797bab82f">
@@ -1153,23 +1089,11 @@ dagger call container --arch=aarch64 publish ghcr.io/mchorfa/shieldcn-zig:latest
       sealed · sha256:948c6a…bab82f
     </div>
   </div>
-</aside>
+</section>
 
 <footer>
   <p>shieldcn-zig &middot; MIT License &middot; <a href="https://github.com/MChorfa/shieldcn-zig">GitHub</a></p>
 </footer>
-
-<script>
-(function () {
-  const margin = document.getElementById('evidence-margin');
-  const toggle = margin?.querySelector('.evidence-toggle');
-  if (!margin || !toggle) return;
-  toggle.addEventListener('click', function () {
-    margin.classList.toggle('expanded');
-    this.setAttribute('aria-expanded', String(margin.classList.contains('expanded')));
-  });
-})();
-</script>
 
 </body>
 </html>
