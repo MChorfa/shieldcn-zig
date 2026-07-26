@@ -989,6 +989,12 @@ curl http://localhost:5335/health</pre>
     </table>
   </div>
 
+  <div class="subsection-label">Airgap-ready</div>
+  <p>
+    The module uses pinned base and runtime images and a vendored Zig package cache.
+    Once the images are mirrored, builds can run offline with no external network access.
+  </p>
+
   <div class="subsection-label">Install the Dagger CLI</div>
   <pre>curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh</pre>
 

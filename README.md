@@ -39,6 +39,7 @@
 | GitHub token pool + memo store | Done | `src/db/*` |
 | Memo badges (GET + PUT) | Done | `/memo/:key` |
 | Dagger CI/CD integration | Done | `ci/main.zig` module |
+| Airgap-ready CI/CD | Done | pinned images, vendored dependencies, offline Zig build |
 | Multi-arch builds | Done | amd64, aarch64 |
 | OCI image | Done | melange + apko |
 | Sigstore signing | Done | keyless with GitHub OIDC |
@@ -120,6 +121,7 @@ curl "http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg"
 ## Dagger CI/CD
 
 This project ships a Dagger module in `ci/main.zig` using the Dagger Zig SDK.
+It is airgap-ready: the module uses pinned base/runtime images and a vendored Zig package cache so builds can run offline once the images are mirrored.
 
 ```bash
 # Install Dagger CLI
