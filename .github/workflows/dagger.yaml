@@ -52,10 +52,10 @@ jobs:
         run: dagger call build-aarch-64 --arg0=. --output=./build-aarch64
 
       - name: Dagger Container (amd64)
-        run: dagger call container --arg0=. --arg1=amd64 --export=./shieldcn-amd64.tar
+        run: dagger call container --arg0=. --arg1=amd64 export --path=./shieldcn-amd64.tar
 
       - name: Dagger Container (aarch64)
-        run: dagger call container --arg0=. --arg1=aarch64 --export=./shieldcn-aarch64.tar
+        run: dagger call container --arg0=. --arg1=aarch64 export --path=./shieldcn-aarch64.tar
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
