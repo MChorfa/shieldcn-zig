@@ -12,6 +12,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -26,14 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify site entrypoint
+        run: |
+          test -f docs/index.html || (echo 'Missing docs/index.html' && exit 1)
+          ls -R docs
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

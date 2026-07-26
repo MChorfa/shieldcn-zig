@@ -44,7 +44,7 @@
 | Sigstore signing | Done | keyless with GitHub OIDC |
 | Structured audit logging | Done | JSON lines to stderr |
 | PNG rasterization | Done | pure-Zig, `zigimg` |
-| Badge groups | Done | `/group/a\|b\|c.svg` |
+| Badge groups | Done | <code>/group/a&#124;b&#124;c.svg</code> |
 
 ## Quickstart
 
@@ -115,7 +115,7 @@ curl "http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg"
 | `github` | `/github/:metric/:owner/:repo.svg` | stars, forks, issues, pulls, release, commits, contributors | Yes |
 | `gitlab` | `/gitlab/:metric/:owner/:repo.svg` | stars, forks, issues, merge-requests, pipeline | Yes |
 | `memo` | `/memo/:key.svg` (GET), `/memo/:key` (PUT) | user-defined | No |
-| `group` | `/group/spec\|spec\|...svg` | stacked static badges | No |
+| `group` | <code>/group/spec&#124;spec&#124;...svg</code> | stacked static badges | No |
 
 ## Dagger CI/CD
 
