@@ -602,6 +602,7 @@
       <li><a href="#groups">Groups</a></li>
       <li><a href="#providers">Providers</a></li>
       <li><a href="#api">API</a></li>
+      <li><a href="#dagger">Dagger</a></li>
     </ul>
   </div>
 </nav>
@@ -965,6 +966,48 @@ curl http://localhost:5335/health</pre>
       </tbody>
     </table>
   </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="dagger">
+  <div class="section-header"><span class="num">16</span><h2>Dagger CI/CD</h2></div>
+  <p class="section-desc">
+    The <code>ci/main.zig</code> module runs the full pipeline in containers.
+    It builds, tests, packages, and exports multi-arch Alpine images from the same code.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Function</th><th>Output</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>build</code></td><td><code>Directory</code></td><td><code>zig-out</code> for x86_64-linux-musl</td></tr>
+        <tr><td><code>build-aarch-64</code></td><td><code>Directory</code></td><td><code>zig-out</code> for aarch64-linux-musl</td></tr>
+        <tr><td><code>test</code></td><td><code>String</code></td><td>Run <code>zig build check</code></td></tr>
+        <tr><td><code>lint</code></td><td><code>String</code></td><td>Alias for <code>test</code> (CI symmetry)</td></tr>
+        <tr><td><code>container --arch=amd64|aarch64</code></td><td><code>Container</code></td><td>Runnable Alpine image with the binary</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection-label">Install the Dagger CLI</div>
+  <pre>curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh</pre>
+
+  <div class="subsection-label">Run CI locally</div>
+  <pre>dagger call lint
+dagger call test
+dagger call build export --path=./build-amd64
+dagger call build-aarch-64 export --path=./build-aarch64
+dagger call container --arch=amd64 export --path=./shieldcn-amd64.tar</pre>
+
+  <div class="subsection-label">Multi-arch OCI image</div>
+  <pre>dagger call container --arch=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
+dagger call container --arch=aarch64 publish ghcr.io/mchorfa/shieldcn-zig:latest-arm64</pre>
+
+  <div class="subsection-label">Workflow wiring</div>
+  <p>
+    <code>.github/workflows/dagger.yaml</code> runs <code>dagger call lint test</code> on every PR.
+    <code>.github/workflows/release.yaml</code> builds both architectures, publishes OCI images, and signs them with Sigstore keyless GitHub OIDC.
+  </p>
 </section>
 
 </main>

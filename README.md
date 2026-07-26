@@ -128,18 +128,21 @@ curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
 # Run CI locally
 dagger call lint
 dagger call test
-dagger call build --output=./build-amd64
-dagger call build-aarch-64 --output=./build-aarch64
-dagger call container amd64 export --path=./shieldcn-amd64.tar
+dagger call build export --path=./build-amd64
+dagger call build-aarch-64 export --path=./build-aarch64
+dagger call container --arch=amd64 export --path=./shieldcn-amd64.tar
+
+# Publish an OCI image
+dagger call container --arch=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
 ```
 
-| Function | Output | Description |
-| ---------- | ------ | ----------- |
-| `build` | `Directory` | `zig-out` for `x86_64-linux-musl` |
-| `buildAarch64` | `Directory` | `zig-out` for `aarch64-linux-musl` |
-| `test` | `String` | `zig build check` |
-| `lint` | `String` | `zig build check` |
-| `container(arch)` | `Container` | runnable Alpine image (`amd64` or `aarch64`) |
+| Function | CLI name | Output | Description |
+| ---------- | -------- | ------ | ----------- |
+| `build` | `build` | `Directory` | `zig-out` for `x86_64-linux-musl` |
+| `buildAarch64` | `build-aarch-64` | `Directory` | `zig-out` for `aarch64-linux-musl` |
+| `test` | `test` | `String` | `zig build check` |
+| `lint` | `lint` | `String` | alias for `test` (CI symmetry) |
+| `container(arch)` | `container --arch=<amd64|aarch64>` | `Container` | runnable Alpine image |
 
 ## Architecture
 

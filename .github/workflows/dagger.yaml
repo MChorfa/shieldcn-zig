@@ -46,16 +46,16 @@ jobs:
         run: dagger call test
 
       - name: Dagger Build (amd64)
-        run: dagger call build --output=./build-amd64
+        run: dagger call build export --path=./build-amd64
 
       - name: Dagger Build (aarch64)
-        run: dagger call build-aarch-64 --output=./build-aarch64
+        run: dagger call build-aarch-64 export --path=./build-aarch64
 
       - name: Dagger Container (amd64)
-        run: dagger call container amd64 export --path=./shieldcn-amd64.tar
+        run: dagger call container --arch=amd64 export --path=./shieldcn-amd64.tar
 
       - name: Dagger Container (aarch64)
-        run: dagger call container aarch64 export --path=./shieldcn-aarch64.tar
+        run: dagger call container --arch=aarch64 export --path=./shieldcn-aarch64.tar
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
