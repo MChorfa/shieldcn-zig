@@ -2,30 +2,25 @@ const std = @import("std");
 const dagger = @import("dagger_sdk");
 
 const ShieldcnModule = struct {
-    fn getSource(ctx: *dagger.module.Context) !dagger.Directory {
-        const host = try ctx.dag().host();
-        return host.directory(".", null, null, null, null);
-    }
-
     pub fn build(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
 
         const zig_version = "0.16.0";
-        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
         const base = try base_ctr.from("kassany/alpine-ziglang:" ++ zig_version, null);
 
         // Mount source code to read-only path
-        const base_with_dir = try base.withDirectory("/src-ro", (try source.id()).value, null, null, null, null, null, null);
-        const src = try base_with_dir.withWorkdir("/src-ro", null);
+        const base_with_dir = try base.withDirectory("/src-ro", (try src.id()).value, null, null, null, null, null, null);
+        const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try src.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project for x86_64-linux-musl
@@ -44,22 +39,22 @@ const ShieldcnModule = struct {
     pub fn buildAarch64(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
 
         const zig_version = "0.16.0";
-        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
         const base = try base_ctr.from("kassany/alpine-ziglang:" ++ zig_version, null);
 
         // Mount source code to read-only path
-        const base_with_dir = try base.withDirectory("/src-ro", (try source.id()).value, null, null, null, null, null, null);
-        const src = try base_with_dir.withWorkdir("/src-ro", null);
+        const base_with_dir = try base.withDirectory("/src-ro", (try src.id()).value, null, null, null, null, null, null);
+        const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try src.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project for aarch64-linux-musl
@@ -78,22 +73,22 @@ const ShieldcnModule = struct {
     pub fn @"test"(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) ![]const u8 {
         _ = self;
 
         const zig_version = "0.16.0";
-        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
         const base = try base_ctr.from("kassany/alpine-ziglang:" ++ zig_version, null);
 
         // Mount source code to read-only path
-        const base_with_dir = try base.withDirectory("/src-ro", (try source.id()).value, null, null, null, null, null, null);
-        const src = try base_with_dir.withWorkdir("/src-ro", null);
+        const base_with_dir = try base.withDirectory("/src-ro", (try src.id()).value, null, null, null, null, null, null);
+        const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try src.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Run tests
@@ -109,22 +104,22 @@ const ShieldcnModule = struct {
     pub fn lint(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) ![]const u8 {
         _ = self;
 
         const zig_version = "0.16.0";
-        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
         const base = try base_ctr.from("kassany/alpine-ziglang:" ++ zig_version, null);
 
         // Mount source code to read-only path
-        const base_with_dir = try base.withDirectory("/src-ro", (try source.id()).value, null, null, null, null, null, null);
-        const src = try base_with_dir.withWorkdir("/src-ro", null);
+        const base_with_dir = try base.withDirectory("/src-ro", (try src.id()).value, null, null, null, null, null, null);
+        const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try src.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Run check
@@ -140,24 +135,24 @@ const ShieldcnModule = struct {
     pub fn container(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
         arch: []const u8,
     ) !dagger.Container {
         _ = self;
 
         const zig_version = "0.16.0";
         const target_option = if (std.mem.eql(u8, arch, "amd64")) "-Dtarget=x86_64-linux-musl" else "-Dtarget=aarch64-linux-musl";
-        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
         const base = try base_ctr.from("kassany/alpine-ziglang:" ++ zig_version, null);
 
         // Mount source code to read-only path
-        const base_with_dir = try base.withDirectory("/src-ro", (try source.id()).value, null, null, null, null, null, null);
-        const src = try base_with_dir.withWorkdir("/src-ro", null);
+        const base_with_dir = try base.withDirectory("/src-ro", (try src.id()).value, null, null, null, null, null, null);
+        const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try src.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project
