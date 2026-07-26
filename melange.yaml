@@ -13,6 +13,7 @@ environment:
       - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
     packages:
       - alpine-baselayout-data
+      - busybox
 
 pipeline:
   - runs: |
