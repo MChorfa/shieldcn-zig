@@ -40,7 +40,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        uses: chainguard-dev/actions/setup-apko@main
+        run: go install chainguard.dev/apko@latest
 
       - name: Build APK with melange
         run: |
@@ -73,7 +73,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        uses: chainguard-dev/actions/setup-apko@main
+        run: go install chainguard.dev/apko@latest
 
       - name: Build OCI image with apko
         run: |

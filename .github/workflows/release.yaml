@@ -34,7 +34,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        uses: chainguard-dev/actions/setup-apko@main
+        run: go install chainguard.dev/apko@latest
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -96,7 +96,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        uses: chainguard-dev/actions/setup-apko@main
+        run: go install chainguard.dev/apko@latest
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
