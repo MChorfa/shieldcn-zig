@@ -18,7 +18,7 @@ Clean-room Zig reimplementation of the [shieldcn](https://shieldcn.dev) badge en
 | Egress allowlist (CKODEX NET-FIL-WHIT)                                        | Done    |
 | Per-provider backoff                                                          | Done    |
 | In-memory LRU cache                                                           | Done    |
-| Token pool + SQLite                                                           | Done    |
+| GitHub token pool + in-memory memo store                                      | Done    |
 | Memo badges (GET + PUT)                                                       | Done    |
 | Dagger CI/CD integration                                                      | Done    |
 | SLSA Level 3 compliance                                                       | Done    |
@@ -48,16 +48,22 @@ curl http://localhost:5335/badge/build-passing-green.svg
 curl http://localhost:5335/badge/build-passing-green.png
 
 # Badge group — stack N static badges vertically (SVG only)
-curl http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg
+curl "http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg"
 
 # npm version (requires network)
 curl http://localhost:5335/npm/react.svg?variant=branded
 
+# npm downloads (last month by default)
+curl http://localhost:5335/npm/downloads/react.svg
+
+# npm license
+curl http://localhost:5335/npm/license/react.svg
+
 # GitLab stars
-curl http://localhost:5335/gitlab/rust-lang/rust/stars.svg
+curl http://localhost:5335/gitlab/stars/rust-lang/rust.svg
 
 # GitHub stars
-curl http://localhost:5335/github/ziglang/zig/stars.svg
+curl http://localhost:5335/github/stars/ziglang/zig.svg
 
 # Memo badge (GET)
 curl http://localhost:5335/memo/mykey.svg
@@ -96,10 +102,12 @@ The Dagger module is defined in `ci/main.zig` with functions:
 # Install Dagger CLI
 curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
 
-# Run Dagger module
-dagger call lint --source=.
-dagger call test --source=.
-dagger call build --source=. --output=./build-amd64
+# Run Dagger module (the Zig SDK exposes source as --arg0)
+dagger call lint --arg0=.
+dagger call test --arg0=.
+dagger call build --arg0=. --output=./build-amd64
+dagger call build-aarch-64 --arg0=. --output=./build-aarch64
+dagger call container --arg0=. --arg1=amd64 export --path=./shieldcn-amd64.tar
 ```
 
 ### SLSA Compliance
@@ -114,10 +122,10 @@ dagger call build --source=. --output=./build-amd64
 
 ```bash
 # Verify OCI image signature
-cosign verify ghcr.io/jal-co/shieldcn-zig:v1.0.0
+cosign verify ghcr.io/MChorfa/shieldcn-zig:v1.0.0
 
 # Verify SBOM
-cosign verify-attestation --type sbom ghcr.io/jal-co/shieldcn-zig:v1.0.0
+cosign verify-attestation --type sbom ghcr.io/MChorfa/shieldcn-zig:v1.0.0
 ```
 
 ## CKODEX Compliance
@@ -135,7 +143,7 @@ cosign verify-attestation --type sbom ghcr.io/jal-co/shieldcn-zig:v1.0.0
 src/
   core/        types, errors
   render/      SVG builder, themes, tokens, measurement, PNG rasterizer, group composer
-  icons/       (planned) SimpleIcons, custom SVG
+  icons/       embedded developer-icons resolver
   providers/   fetch layer, npm, static, github, gitlab
   server/      HTTP server, router, params
   cache/       LRU, backoff

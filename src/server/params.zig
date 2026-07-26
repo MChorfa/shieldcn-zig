@@ -27,6 +27,8 @@ pub const BadgeParams = struct {
     gap: ?u32 = null,
     label_gap: ?u32 = null,
     theme: ?[]const u8 = null,
+    tag: ?[]const u8 = null,
+    period: ?[]const u8 = null,
 };
 
 /// Parse query string into BadgeParams. Keys are compared case-insensitively.
@@ -104,6 +106,10 @@ pub fn parseQueryString(allocator: std.mem.Allocator, query: []const u8) !BadgeP
             allocator.free(decoded);
         } else if (eqlIgnoreCase(key, "theme")) {
             params.theme = decoded;
+        } else if (eqlIgnoreCase(key, "tag")) {
+            params.tag = decoded;
+        } else if (eqlIgnoreCase(key, "period")) {
+            params.period = decoded;
         } else {
             allocator.free(decoded);
         }
@@ -165,6 +171,8 @@ test "parseQueryString basic params" {
         if (params.label) |l| allocator.free(l);
         if (params.gradient) |l| allocator.free(l);
         if (params.theme) |l| allocator.free(l);
+        if (params.tag) |l| allocator.free(l);
+        if (params.period) |l| allocator.free(l);
     }
 
     try std.testing.expectEqual(types.BadgeStyle.branded, params.variant);

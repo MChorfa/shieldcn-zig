@@ -38,47 +38,55 @@ pub fn providerFetch(
         return FetchError.ProviderBackedOff;
     }
 
-    // Perform fetch using Zig 0.16 request API
+    // Perform fetch using Zig 0.16 high-level fetch API
     var client = std.http.Client{ .allocator = allocator, .io = io };
     defer client.deinit();
-
-    const uri = std.Uri.parse(url) catch return FetchError.InvalidResponse;
 
     const auth_header = if (auth_token) |t| b: {
         const bearer = std.fmt.allocPrint(allocator, "Bearer {s}", .{t}) catch break :b .omit;
         break :b std.http.Client.Request.Headers.Value{ .override = bearer };
     } else .omit;
 
-    var req = client.request(.GET, uri, .{
-        .redirect_behavior = @enumFromInt(3),
+    var body_writer = std.Io.Writer.Allocating.init(allocator);
+    errdefer body_writer.deinit();
+
+    var redirect_buffer: [8192]u8 = undefined;
+
+    const result = client.fetch(.{
+        .location = .{ .url = url },
         .headers = .{
             .authorization = auth_header,
             .user_agent = .{ .override = "shieldcn-zig/0.1" },
         },
-    }) catch return FetchError.RequestFailed;
+        .response_writer = &body_writer.writer,
+        .redirect_buffer = &redirect_buffer,
+    }) catch |err| {
+        std.log.err("HTTP fetch to {s} failed: {}", .{ url, err });
+        return FetchError.RequestFailed;
+    };
+
     defer {
         switch (auth_header) {
             .override => |v| if (auth_token != null) allocator.free(v),
             else => {},
         }
-        req.deinit();
     }
 
-    req.sendBodiless() catch return FetchError.RequestFailed;
-
-    var redirect_buffer: [4096]u8 = undefined;
-    var response = req.receiveHead(&redirect_buffer) catch return FetchError.RequestFailed;
-
-    const status = response.head.status;
+    const status = result.status;
     if (status == .too_many_requests or status.class() == .server_error) {
+        std.log.warn("Provider {s} rate-limited/server-error: {s}", .{ provider, @tagName(status) });
         backoff.recordBackoff(provider);
         return FetchError.ProviderBackedOff;
     }
     if (status.class() != .success) {
+        std.log.err("HTTP {s} for {s}", .{ @tagName(status), url });
         return FetchError.RequestFailed;
     }
 
-    const body = response.reader(&.{}).allocRemaining(allocator, .limited(1024 * 1024)) catch return FetchError.RequestFailed;
+    const body = body_writer.toOwnedSlice() catch |err| {
+        std.log.err("HTTP body finalize for {s} failed: {}", .{ url, err });
+        return FetchError.RequestFailed;
+    };
 
     // Clear backoff on success
     backoff.clearBackoff(provider);

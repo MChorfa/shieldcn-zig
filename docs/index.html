@@ -395,9 +395,9 @@
   <div class="meta">
     <div class="stat"><div class="num">6</div><div class="label">Variants</div></div>
     <div class="stat"><div class="num">4</div><div class="label">Sizes</div></div>
-    <div class="stat"><div class="num">3</div><div class="label">Themes</div></div>
+    <div class="stat"><div class="num">5</div><div class="label">Themes</div></div>
     <div class="stat"><div class="num">6</div><div class="label">Providers</div></div>
-    <div class="stat"><div class="num">0</div><div class="label">Dependencies</div></div>
+    <div class="stat"><div class="num">1</div><div class="label">Build dep</div></div>
   </div>
 </div>
 
@@ -587,12 +587,12 @@
         <tr><th>Provider</th><th>Path Pattern</th><th>Metrics</th><th>Network</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>badge</code></td><td><code>/badge/label-value-color.svg</code></td><td>static</td><td>No</td></tr>
-        <tr><td><code>npm</code></td><td><code>/npm/package.svg</code></td><td>version, downloads, license</td><td>Yes</td></tr>
-        <tr><td><code>github</code></td><td><code>/github/metric/owner/repo.svg</code></td><td>stars, forks, issues, pulls, release, commits, contributors</td><td>Yes</td></tr>
-        <tr><td><code>gitlab</code></td><td><code>/gitlab/metric/owner/repo.svg</code></td><td>stars, forks, issues, merge-requests, pipeline</td><td>Yes</td></tr>
-        <tr><td><code>memo</code></td><td><code>/memo/key.svg</code></td><td>user-defined (GET + PUT)</td><td>No</td></tr>
-        <tr><td><code>group</code></td><td><code>/group/spec|spec.svg</code></td><td>stacked static badges</td><td>No</td></tr>
+        <tr><td><code>badge</code></td><td><code>/badge/label-message-color.svg</code></td><td>static</td><td>No</td></tr>
+        <tr><td><code>npm</code></td><td><code>/npm/:metric/:package.svg</code> (metric optional, defaults to version)</td><td>version, downloads, license</td><td>Yes</td></tr>
+        <tr><td><code>github</code></td><td><code>/github/:metric/:owner/:repo.svg</code></td><td>stars, forks, issues, pulls, release, commits, contributors</td><td>Yes</td></tr>
+        <tr><td><code>gitlab</code></td><td><code>/gitlab/:metric/:owner/:repo.svg</code></td><td>stars, forks, issues, merge-requests, pipeline</td><td>Yes</td></tr>
+        <tr><td><code>memo</code></td><td><code>/memo/:key.svg</code> (GET) / <code>/memo/:key</code> (PUT)</td><td>user-defined</td><td>No</td></tr>
+        <tr><td><code>group</code></td><td><code>/group/spec|spec|...svg</code></td><td>stacked static badges</td><td>No</td></tr>
       </tbody>
     </table>
   </div>
@@ -613,14 +613,23 @@
         <tr><td><code>color</code></td><td>named or #hex</td><td>from path</td></tr>
         <tr><td><code>labelColor</code></td><td>named or #hex</td><td>theme</td></tr>
         <tr><td><code>valueColor</code></td><td>named or #hex</td><td>auto-contrast</td></tr>
+        <tr><td><code>labelTextColor</code></td><td>named or #hex</td><td>theme</td></tr>
         <tr><td><code>label</code></td><td>string</td><td>from path</td></tr>
         <tr><td><code>split</code></td><td>true, false</td><td>auto (true when color present)</td></tr>
         <tr><td><code>statusDot</code></td><td>true, false</td><td>false</td></tr>
         <tr><td><code>gradient</code></td><td>color name</td><td>null</td></tr>
         <tr><td><code>labelOpacity</code></td><td>float 0–1</td><td>0.85</td></tr>
         <tr><td><code>height</code></td><td>px</td><td>preset</td></tr>
-        <tr><td><code>font_size</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>fontSize</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>iconSize</code></td><td>px</td><td>preset</td></tr>
         <tr><td><code>radius</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>padX</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>gap</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>labelGap</code></td><td>px</td><td>preset</td></tr>
+        <tr><td><code>logo</code></td><td>icon slug</td><td>null</td></tr>
+        <tr><td><code>logoColor</code></td><td>named or #hex</td><td>theme</td></tr>
+        <tr><td><code>tag</code></td><td>npm dist tag</td><td>latest</td></tr>
+        <tr><td><code>period</code></td><td>last-week, last-month, last-year</td><td>last-month</td></tr>
       </tbody>
     </table>
   </div>
@@ -692,9 +701,9 @@ zig build run -- serve --host 0.0.0.0 --port 5335</pre>
   <div class="subsection-label">Quick requests</div>
   <pre>curl http://localhost:5335/badge/build-passing-green.svg
 curl http://localhost:5335/badge/build-passing-green.png
-curl http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg
+curl "http://localhost:5335/group/build-passing-green|coverage-92%25-blue.svg"
 curl http://localhost:5335/npm/react.svg?variant=branded
-curl http://localhost:5335/github/ziglang/zig/stars.svg
+curl http://localhost:5335/github/stars/ziglang/zig.svg
 curl http://localhost:5335/health</pre>
 </section>
 
@@ -734,7 +743,7 @@ curl http://localhost:5335/health</pre>
 </main>
 
 <footer>
-  <p>shieldcn-zig &middot; MIT License &middot; <a href="https://github.com/jal-co/shieldcn-zig">GitHub</a></p>
+  <p>shieldcn-zig &middot; MIT License &middot; <a href="https://github.com/MChorfa/shieldcn-zig">GitHub</a></p>
 </footer>
 
 </body>

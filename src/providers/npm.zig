@@ -7,7 +7,7 @@ const fmt = @import("../util/format.zig");
 /// npm registry API client: version, downloads, license.
 pub fn getNpmVersion(allocator: std.mem.Allocator, pkg: []const u8, tag: ?[]const u8, io: std.Io) !?types.BadgeData {
     const dist = tag orelse "latest";
-    const encoded = try std.Uri.encodeComponent(allocator, pkg);
+    const encoded = try percentEncodeComponent(allocator, pkg);
     defer allocator.free(encoded);
 
     const url = try std.fmt.allocPrint(allocator, "https://registry.npmjs.org/{s}/{s}", .{ encoded, dist });
@@ -16,11 +16,20 @@ pub fn getNpmVersion(allocator: std.mem.Allocator, pkg: []const u8, tag: ?[]cons
     const body = try fetch.providerFetch(allocator, "npm", url, 3600, null, io);
     defer allocator.free(body);
 
-    const parsed = try std.json.parseFromSlice(std.json.Value, allocator, body, .{});
+    const parsed = std.json.parseFromSlice(std.json.Value, allocator, body, .{}) catch |err| {
+        std.log.err("npm version JSON parse failed for {s}: {}", .{ pkg, err });
+        return null;
+    };
     defer parsed.deinit();
 
-    const version = parsed.value.object.get("version") orelse return null;
-    if (version != .string) return null;
+    const version = parsed.value.object.get("version") orelse {
+        std.log.err("npm version response for {s} missing version field", .{pkg});
+        return null;
+    };
+    if (version != .string) {
+        std.log.err("npm version field for {s} is not a string", .{pkg});
+        return null;
+    }
 
     const link = try std.fmt.allocPrint(allocator, "https://www.npmjs.com/package/{s}", .{pkg});
 
@@ -32,7 +41,7 @@ pub fn getNpmVersion(allocator: std.mem.Allocator, pkg: []const u8, tag: ?[]cons
 }
 
 pub fn getNpmDownloads(allocator: std.mem.Allocator, pkg: []const u8, period: []const u8, io: std.Io) !?types.BadgeData {
-    const encoded = try std.Uri.encodeComponent(allocator, pkg);
+    const encoded = try percentEncodeComponent(allocator, pkg);
     defer allocator.free(encoded);
 
     const url = try std.fmt.allocPrint(allocator, "https://api.npmjs.org/downloads/point/{s}/{s}", .{ period, encoded });
@@ -63,7 +72,7 @@ pub fn getNpmDownloads(allocator: std.mem.Allocator, pkg: []const u8, period: []
 }
 
 pub fn getNpmLicense(allocator: std.mem.Allocator, pkg: []const u8, io: std.Io) !?types.BadgeData {
-    const encoded = try std.Uri.encodeComponent(allocator, pkg);
+    const encoded = try percentEncodeComponent(allocator, pkg);
     defer allocator.free(encoded);
 
     const url = try std.fmt.allocPrint(allocator, "https://registry.npmjs.org/{s}/latest", .{encoded});
@@ -89,4 +98,23 @@ pub fn getNpmLicense(allocator: std.mem.Allocator, pkg: []const u8, io: std.Io) 
         .value = try allocator.dupe(u8, license_str),
         .link = link,
     };
+}
+
+const HEX_UPPER = "0123456789ABCDEF";
+
+fn percentEncodeComponent(allocator: std.mem.Allocator, input: []const u8) ![]const u8 {
+    var result: std.ArrayList(u8) = .empty;
+    errdefer result.deinit(allocator);
+
+    for (input) |c| {
+        if (std.ascii.isAlphanumeric(c) or c == '-' or c == '_' or c == '.' or c == '~') {
+            try result.append(allocator, c);
+        } else {
+            try result.append(allocator, '%');
+            try result.append(allocator, HEX_UPPER[c >> 4]);
+            try result.append(allocator, HEX_UPPER[c & 0x0F]);
+        }
+    }
+
+    return try result.toOwnedSlice(allocator);
 }

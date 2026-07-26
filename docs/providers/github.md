@@ -1,6 +1,6 @@
 # GitHub Provider
 
-The GitHub provider fetches repository metrics from the GitHub API and displays them as badges.
+The GitHub provider fetches repository metrics from the GitHub API and renders them as badges.
 
 ## Endpoints
 
@@ -24,136 +24,143 @@ All endpoints follow the pattern: `/github/{metric}/{owner}/{repo}.svg`
 
 ```bash
 # Basic stars badge
-curl http://localhost:5335/github/ziglang/zig/stars.svg
+curl http://localhost:5335/github/stars/ziglang/zig.svg
 
 # With dark theme
-curl http://localhost:5335/github/ziglang/zig/stars.svg?theme=dark
+curl http://localhost:5335/github/stars/ziglang/zig.svg?mode=dark
 
 # With custom label
-curl http://localhost:5335/github/ziglang/zig/stars.svg?label=stargazers
+curl http://localhost:5335/github/stars/ziglang/zig.svg?label=stargazers
 
 # With branded variant
-curl http://localhost:5335/github/ziglang/zig/stars.svg?variant=branded
+curl http://localhost:5335/github/stars/ziglang/zig.svg?variant=branded
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Stars](http://your-server.com/github/ziglang/zig/stars.svg)
+![Stars](http://your-server.com/github/stars/ziglang/zig.svg)
 ```
 
 ### Forks Badge
 
 ```bash
 # Basic forks badge
-curl http://localhost:5335/github/torvalds/linux/forks.svg
+curl http://localhost:5335/github/forks/torvalds/linux.svg
 
-# With custom colors
-curl http://localhost:5335/github/torvalds/linux/forks.svg?color=3b82f6
+# With custom color
+curl http://localhost:5335/github/forks/torvalds/linux.svg?color=3b82f6
 
-# Flat-square variant
-curl http://localhost:5335/github/torvalds/linux/forks.svg?variant=flat-square
+# With outline variant
+curl http://localhost:5335/github/forks/torvalds/linux.svg?variant=outline
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Forks](http://your-server.com/github/torvalds/linux/forks.svg)
+![Forks](http://your-server.com/github/forks/torvalds/linux.svg)
 ```
 
 ### Issues Badge
 
 ```bash
 # Basic issues badge
-curl http://localhost:5335/github/facebook/react/issues.svg
+curl http://localhost:5335/github/issues/facebook/react.svg
 
 # Dark theme with custom label
-curl http://localhost:5335/github/facebook/react/issues.svg?theme=dark&label=open%20issues
+curl http://localhost:5335/github/issues/facebook/react.svg?mode=dark&label=open%20issues
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Issues](http://your-server.com/github/facebook/react/issues.svg)
+![Issues](http://your-server.com/github/issues/facebook/react.svg)
 ```
 
 ### Pull Requests Badge
 
 ```bash
 # Basic PRs badge
-curl http://localhost:5335/github/microsoft/vscode/pulls.svg
+curl http://localhost:5335/github/pulls/microsoft/vscode.svg
 
-# For-the-badge variant
-curl http://localhost:5335/github/microsoft/vscode/pulls.svg?variant=for-the-badge
+# Branded variant
+curl http://localhost:5335/github/pulls/microsoft/vscode.svg?variant=branded
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Pull Requests](http://your-server.com/github/microsoft/vscode/pulls.svg)
+![Pull Requests](http://your-server.com/github/pulls/microsoft/vscode.svg)
 ```
 
 ### Release Badge
 
 ```bash
 # Latest release tag
-curl http://localhost:5335/github/ziglang/zig/release.svg
+curl http://localhost:5335/github/release/ziglang/zig.svg
 
 # With custom label
-curl http://localhost:5335/github/ziglang/zig/release.svg?label=version
-
-# Dark theme
-curl http://localhost:5335/github/ziglang/zig/release.svg?theme=dark
+curl http://localhost:5335/github/release/ziglang/zig.svg?label=version
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Release](http://your-server.com/github/ziglang/zig/release.svg)
+![Release](http://your-server.com/github/release/ziglang/zig.svg)
 ```
 
 ### Commits Badge
 
 ```bash
 # Last commit date
-curl http://localhost:5335/github/ziglang/zig/commits.svg
+curl http://localhost:5335/github/commits/ziglang/zig.svg
 
 # With custom label
-curl http://localhost:5335/github/ziglang/zig/commits.svg?label=last%20commit
+curl http://localhost:5335/github/commits/ziglang/zig.svg?label=last%20commit
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Commits](http://your-server.com/github/ziglang/zig/commits.svg)
+![Commits](http://your-server.com/github/commits/ziglang/zig.svg)
 ```
 
 ### Contributors Badge
 
 ```bash
 # Contributor count
-curl http://localhost:5335/github/ziglang/zig/contributors.svg
+curl http://localhost:5335/github/contributors/ziglang/zig.svg
 
 # With branded variant
-curl http://localhost:5335/github/ziglang/zig/contributors.svg?variant=branded
+curl http://localhost:5335/github/contributors/ziglang/zig.svg?variant=branded
 ```
 
-**BadgeSandbox Example:**
+**Markdown Example:**
 
 ```markdown
-![Contributors](http://your-server.com/github/ziglang/zig/contributors.svg)
+![Contributors](http://your-server.com/github/contributors/ziglang/zig.svg)
 ```
 
 ## Query Parameters
 
-All GitHub badges support standard query parameters:
+All GitHub badges support the following query parameters (keys are case-insensitive):
 
-- `variant` - Badge variant: `flat`, `flat-square`, `for-the-badge`, `plastic`, `branded` (default: `flat`)
-- `theme` - Color theme: `light`, `dark` (default: `light`)
-- `color` - Custom badge color (hex code)
-- `label` - Custom label text
-- `label_color` - Custom label color (hex code)
-- `value_color` - Custom value color (hex code)
+| Param         | Values                                                    | Default       |
+| ------------- | --------------------------------------------------------- | ------------- |
+| `variant`     | `default`, `secondary`, `outline`, `ghost`, `destructive`, `branded` | `default`     |
+| `size`        | `xs`, `sm`, `default`, `lg`                               | `sm`          |
+| `mode`        | `dark`, `light`                                           | `dark`        |
+| `theme`       | `dark`, `light`, `high-contrast`, `enterprise`, `custom`  | `dark`        |
+| `font`        | `inter`, `geist`, `geist-mono`                            | `inter`       |
+| `color`       | named color or `#hex`                                     | from path     |
+| `labelColor`  | named color or `#hex`                                     | theme         |
+| `valueColor`  | named color or `#hex`                                     | auto-contrast |
+| `labelTextColor` | named color or `#hex`                                  | theme         |
+| `label`       | string                                                    | from metric   |
+| `split`       | `true`, `false`                                           | `true` when color present |
+| `statusDot`   | `true`, `false`                                           | `false`       |
+| `gradient`    | color name                                                | none          |
+| `labelOpacity`| float `0`–`1`                                             | `0.85`        |
 
 ## Authentication
 
@@ -163,7 +170,10 @@ The GitHub provider uses a token pool for authentication. Configure GitHub token
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 ```
 
+Multiple tokens can be supplied; the pool round-robins across tokens with remaining quota.
+
 Tokens are used to:
+
 - Increase API rate limits (5000 requests/hour vs 60/hour)
 - Access private repositories (if configured)
 
@@ -173,14 +183,13 @@ GitHub API responses are cached for 1 hour (3600 seconds) to reduce API load.
 
 ## Rate Limiting
 
-Without authentication: 60 requests/hour
+Without authentication: 60 requests/hour  
 With authentication: 5000 requests/hour
 
 If rate limits are exceeded, the badge will show an error state.
 
 ## Notes
 
-- All badges link to the relevant GitHub page (stars → stargazers, forks → network, etc.)
-- The `commits` badge shows the full ISO 8601 date string
-- The `release` badge shows the tag name and links to the release page
-- The `contributors` badge counts the total number of contributors
+- The `commits` badge shows the full ISO 8601 date string.
+- The `release` badge shows the tag name.
+- The `contributors` badge counts the total number of contributors.

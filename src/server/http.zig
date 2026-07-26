@@ -12,6 +12,7 @@ const hex_util = @import("../util/hex.zig");
 const contrast = @import("../util/contrast.zig");
 const audit = @import("../util/audit.zig");
 const static_provider = @import("../providers/static.zig");
+const npm = @import("../providers/npm.zig");
 
 /// shieldcn-zig — server/http.zig
 /// HTTP server using raw POSIX sockets (Zig 0.16 std.Io.net lacks listen() API).
@@ -235,7 +236,23 @@ pub const Server = struct {
                 badge_data = .{ .label = "memo", .value = "not found" };
             }
         } else if (std.mem.eql(u8, route.provider, "npm")) {
-            badge_data = .{ .label = route.provider, .value = route.segments[route.segments.len - 1] };
+            if (route.segments.len < 2) {
+                badge_data = .{ .label = "npm", .value = "invalid path" };
+            } else {
+                const metric = if (route.segments.len >= 3) route.segments[1] else "version";
+                const pkg = route.segments[route.segments.len - 1];
+
+                var npm_result: ?types.BadgeData = null;
+                if (std.mem.eql(u8, metric, "version")) {
+                    npm_result = npm.getNpmVersion(self.allocator, pkg, route.query.tag, self.io) catch null;
+                } else if (std.mem.eql(u8, metric, "downloads")) {
+                    const period = route.query.period orelse "last-month";
+                    npm_result = npm.getNpmDownloads(self.allocator, pkg, period, self.io) catch null;
+                } else if (std.mem.eql(u8, metric, "license")) {
+                    npm_result = npm.getNpmLicense(self.allocator, pkg, self.io) catch null;
+                }
+                badge_data = npm_result orelse types.BadgeData{ .label = "npm", .value = metric };
+            }
         } else if (std.mem.eql(u8, route.provider, "github")) {
             const github = @import("../providers/github.zig");
             if (route.segments.len < 4) {
