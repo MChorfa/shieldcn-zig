@@ -12,6 +12,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,34 +47,53 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-zig-
 
-      - name: Fetch dependencies
-        run: zig fetch
-
       - name: Dagger Lint
-        run: dagger call lint --source=.
+        run: dagger call lint --arg0=.
 
       - name: Dagger Test
-        run: dagger call test --source=.
+        run: dagger call test --arg0=.
 
-      - name: Build APK with melange (amd64)
+      - name: Build binary
+        run: |
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            TARGET="x86_64-linux-musl"
+          else
+            TARGET="aarch64-linux-musl"
+          fi
+          zig build -Doptimize=ReleaseFast -Dtarget=${TARGET}
+
+      - name: Build APK with melange
         run: |
           melange build melange.yaml \
-            --arch x86_64 \
-            --out-dir packages/
+            --arch ${{ matrix.arch }} \
+            --out-dir packages/ \
+            --source-dir .
 
-      - name: Build APK with melange (aarch64)
-        run: |
-          melange build melange.yaml \
-            --arch aarch64 \
-            --out-dir packages/
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ matrix.arch }}
+          path: packages/
 
-      - name: Build OCI image with apko
-        run: |
-          apko build apko.yaml \
-            shieldcn:${{ github.ref_name }} \
-            apko.tar \
-            --arch x86_64,aarch64 \
-            --repository-append packages/
+  image:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: apk-*
+          merge-multiple: true
+          path: packages/
+
+      - name: Install melange + apko
+        uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
 
       - name: Login to GHCR
         run: |
@@ -82,7 +104,7 @@ jobs:
           apko publish apko.yaml \
             ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
             ghcr.io/${{ github.repository }}:latest \
-            --arch x86_64,aarch64 \
+            --arch amd64,arm64 \
             --repository-append packages/
 
       - name: Sign OCI image with cosign
@@ -100,7 +122,7 @@ jobs:
       - name: Generate SBOM
         run: |
           apko sbom apko.yaml \
-            --arch x86_64,aarch64 \
+            --arch amd64,arm64 \
             --repository-append packages/ \
             --sbom-formats spdx-json \
             --output sbom.spdx.json

@@ -13,24 +13,9 @@ environment:
       - https://dl-cdn.alpinelinux.org/alpine/v3.20/community
     packages:
       - alpine-baselayout-data
-      - build-base
-      - ca-certificates-bundle
-      - curl
-      - tar
-      - xz
-      - freetype-dev
-      - sqlite-dev
 
 pipeline:
   - runs: |
-      # Install Zig 0.16.0 (Alpine 3.20 ships an older version)
-      curl -L https://ziglang.org/download/0.16.0/zig-${ARCH}-linux-0.16.0.tar.xz | tar -xJ -C /tmp
-      export PATH="/tmp/zig-${ARCH}-linux-0.16.0:$PATH"
-
-      # Build static binary targeting musl
-      zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-linux-musl
-
-  - runs: |
-      install -Dm755 zig-out/bin/shieldcn "${{targets.destdir}}"/usr/bin/shieldcn
+      install -Dm755 /home/build/zig-out/bin/shieldcn "${{targets.destdir}}"/usr/bin/shieldcn
 
   - uses: strip

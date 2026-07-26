@@ -15,9 +15,26 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Build binary
+        run: |
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            TARGET="x86_64-linux-musl"
+          else
+            TARGET="aarch64-linux-musl"
+          fi
+          zig build -Doptimize=ReleaseFast -Dtarget=${TARGET}
 
       - name: Install melange + apko
         uses: chainguard-dev/actions/setup-melange@main
@@ -25,15 +42,39 @@ jobs:
       - name: Build APK with melange
         run: |
           melange build melange.yaml \
-            --arch amd64,aarch64 \
-            --out-dir packages/
+            --arch ${{ matrix.arch }} \
+            --out-dir packages/ \
+            --source-dir .
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ matrix.arch }}
+          path: packages/
+
+  image:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: apk-*
+          merge-multiple: true
+          path: packages/
+
+      - name: Install melange + apko
+        uses: chainguard-dev/actions/setup-melange@main
 
       - name: Build OCI image with apko
         run: |
           apko build apko.yaml \
             shieldcn:latest \
             apko.tar \
-            --arch amd64,aarch64 \
+            --arch amd64,arm64 \
             --repository-append packages/
 
       - name: Publish to GHCR (tags only)
@@ -42,5 +83,5 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           apko publish apko.yaml \
             ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
-            --arch amd64,aarch64 \
+            --arch amd64,arm64 \
             --repository-append packages/
