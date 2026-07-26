@@ -30,8 +30,14 @@ jobs:
           curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
           cd -
 
-      - name: Install melange + apko
+      - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install apko
+        run: |
+          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_$(uname -s)_$(uname -m).tar.gz
+          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
+          rm apko.tar.gz
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -89,8 +95,14 @@ jobs:
           merge-multiple: true
           path: packages/
 
-      - name: Install melange + apko
+      - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install apko
+        run: |
+          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_$(uname -s)_$(uname -m).tar.gz
+          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
+          rm apko.tar.gz
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3

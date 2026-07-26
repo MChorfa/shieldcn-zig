@@ -20,7 +20,7 @@ const ShieldcnModule = struct {
         const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project for x86_64-linux-musl
@@ -54,7 +54,7 @@ const ShieldcnModule = struct {
         const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project for aarch64-linux-musl
@@ -88,7 +88,7 @@ const ShieldcnModule = struct {
         const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Run tests
@@ -120,7 +120,7 @@ const ShieldcnModule = struct {
         const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Run check
@@ -154,7 +154,7 @@ const ShieldcnModule = struct {
         const workdir = try base_with_dir.withWorkdir("/src-ro", null);
 
         // Copy source to writable /tmp/build
-        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/.zig-cache /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
+        const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
         // Build the project

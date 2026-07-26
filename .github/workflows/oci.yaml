@@ -36,8 +36,14 @@ jobs:
           fi
           zig build -Doptimize=ReleaseFast -Dtarget=${TARGET}
 
-      - name: Install melange + apko
+      - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install apko
+        run: |
+          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_$(uname -s)_$(uname -m).tar.gz
+          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
+          rm apko.tar.gz
 
       - name: Build APK with melange
         run: |
@@ -66,8 +72,14 @@ jobs:
           merge-multiple: true
           path: packages/
 
-      - name: Install melange + apko
+      - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Install apko
+        run: |
+          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_$(uname -s)_$(uname -m).tar.gz
+          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
+          rm apko.tar.gz
 
       - name: Build OCI image with apko
         run: |
