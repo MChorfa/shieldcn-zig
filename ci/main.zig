@@ -91,15 +91,16 @@ const ShieldcnModule = struct {
         const prep = try workdir.withExec(&.{ "sh", "-c", "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied" }, null, null, null, null, null, null, null, null, null, null);
         const build_src = try prep.withWorkdir("/tmp/build", null);
 
-        // Run tests
+        // Run tests — use expect=ANY so we can capture output even on failure
         const test_run = try build_src.withExec(&.{
             "zig",
             "build",
             "test",
-        }, null, null, null, null, null, null, null, null, null, null);
+        }, null, null, null, null, null, .ANY, null, null, null, null);
 
         _ = try test_run.sync();
-        return "tests passed";
+        const output = try test_run.stderr();
+        return output;
     }
 
     pub fn lint(
