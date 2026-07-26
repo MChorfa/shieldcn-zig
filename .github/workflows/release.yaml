@@ -121,7 +121,9 @@ jobs:
           path: .
 
       - name: Install apko
-        run: go install chainguard.dev/apko@latest
+        run: |
+          go install chainguard.dev/apko@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
