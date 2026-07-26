@@ -206,10 +206,19 @@
   }
 
   /* ---- Main content ---- */
-  main {
-    max-width: 1200px;
+  .page-shell {
+    max-width: 1440px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 2.5rem;
     padding: 0 2rem 5rem;
+  }
+  main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
   }
   section {
     margin-bottom: 5rem;
@@ -475,6 +484,73 @@
   .arch-tree .dir { color: var(--accent2); font-weight: 600; }
   .arch-tree .c { color: var(--muted); }
 
+  /* ---- Evidence margin ---- */
+  .evidence-margin {
+    position: sticky;
+    top: 88px;
+    height: max-content;
+    max-height: calc(100vh - 112px);
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .evidence-title {
+    font-family: var(--display);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+  .receipt {
+    margin-bottom: 1.1rem;
+    padding-left: 0.85rem;
+    border-left: 2px solid var(--border-bright);
+  }
+  .receipt--proof { border-left-color: #a78bfa; }
+  .receipt--alarm { border-left-color: #f87171; }
+  .receipt-time {
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+  }
+  .receipt-event {
+    color: var(--fg);
+    margin-top: 0.2rem;
+    font-weight: 600;
+  }
+  .receipt-detail {
+    color: var(--muted2);
+    font-size: 0.7rem;
+    margin-top: 0.35rem;
+    word-break: break-all;
+  }
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgba(167,139,250,0.35);
+    border-radius: var(--radius-sm);
+    color: #c4b5fd;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    background: rgba(167,139,250,0.08);
+    user-select: all;
+    cursor: pointer;
+  }
+  .stamp:hover { border-color: rgba(167,139,250,0.55); color: #d8b4fe; }
+  .stamp .glyph { color: #a78bfa; font-weight: 700; }
+
   /* ---- Footer ---- */
   footer {
     text-align: center;
@@ -496,7 +572,17 @@
     .hero .meta .stat .num { font-size: 1.6rem; }
     nav { padding: 0 1.25rem; }
     nav .nav-links { display: none; }
-    main { padding: 0 1.25rem 4rem; }
+    .page-shell {
+      grid-template-columns: 1fr;
+      padding: 0 1.25rem 3rem;
+      gap: 2rem;
+    }
+    main { padding: 0 0 2rem; }
+    .evidence-margin {
+      position: static;
+      max-height: none;
+      order: 1;
+    }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     pre { padding: 1.1rem; font-size: 0.78rem; }
   }
@@ -541,6 +627,7 @@
   </div>
 </div>
 
+<div class="page-shell">
 <main>
 
 <!-- ================================================================ -->
@@ -881,6 +968,41 @@ curl http://localhost:5335/health</pre>
 </section>
 
 </main>
+
+<aside class="evidence-margin" aria-label="Evidence margin">
+  <div class="evidence-title">Evidence margin</div>
+
+  <div class="receipt">
+    <div class="receipt-time">2026-07-26T22:32:52Z</div>
+    <div class="receipt-event">generated · site artifact</div>
+    <div class="receipt-detail">deployed by GitHub Actions</div>
+  </div>
+
+  <div class="receipt">
+    <div class="receipt-time">2026-07-26T22:33:07Z</div>
+    <div class="receipt-event">exported · GitHub Pages</div>
+    <div class="receipt-detail">https://mchorfa.github.io/shieldcn-zig/</div>
+  </div>
+
+  <div class="receipt receipt--proof">
+    <div class="receipt-time">2026-07-26T03:14:39Z</div>
+    <div class="receipt-event">attested · CKODEX / CSR</div>
+    <div class="receipt-detail">evidence/bundle.json</div>
+  </div>
+
+  <div class="receipt">
+    <div class="receipt-time">—</div>
+    <div class="receipt-event">approved · MIT License</div>
+    <div class="receipt-detail">permissive open source</div>
+  </div>
+
+  <div class="stamp" title="sha256:948c6a01374922f8611279c522e44b88df950ed35daf9c55082838e797bab82f">
+    <span class="glyph" aria-hidden="true">◆</span>
+    sealed · sha256:948c6a…bab82f
+  </div>
+</aside>
+
+</div>
 
 <footer>
   <p>shieldcn-zig &middot; MIT License &middot; <a href="https://github.com/MChorfa/shieldcn-zig">GitHub</a></p>

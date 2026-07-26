@@ -61,7 +61,6 @@ pub fn parseBadgePath(
     }
 
     if (seg_list.items.len == 0) {
-        seg_list.deinit(allocator);
         return error.InvalidPath;
     }
 
