@@ -40,22 +40,22 @@ jobs:
             ${{ runner.os }}-zig-
 
       - name: Dagger Lint
-        run: dagger call lint --source=.
+        run: dagger call lint
 
       - name: Dagger Test
-        run: dagger call test --source=.
+        run: dagger call test
 
       - name: Dagger Build (amd64)
-        run: dagger call build --source=. --output=./build-amd64
+        run: dagger call build --output=./build-amd64
 
       - name: Dagger Build (aarch64)
-        run: dagger call buildAarch64 --source=. --output=./build-aarch64
+        run: dagger call buildAarch64 --output=./build-aarch64
 
       - name: Dagger Container (amd64)
-        run: dagger call container --source=. --arch=amd64 --export=./shieldcn-amd64.tar
+        run: dagger call container --arch=amd64 --export=./shieldcn-amd64.tar
 
       - name: Dagger Container (aarch64)
-        run: dagger call container --source=. --arch=aarch64 --export=./shieldcn-aarch64.tar
+        run: dagger call container --arch=aarch64 --export=./shieldcn-aarch64.tar
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

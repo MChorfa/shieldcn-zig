@@ -2,14 +2,19 @@ const std = @import("std");
 const dagger = @import("dagger_sdk");
 
 const ShieldcnModule = struct {
+    fn getSource(ctx: *dagger.module.Context) !dagger.Directory {
+        const host = try ctx.dag().host();
+        return host.directory(".", null, null, null, null);
+    }
+
     pub fn build(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
-        source: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
 
         const zig_version = "0.16.0";
+        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
@@ -39,11 +44,11 @@ const ShieldcnModule = struct {
     pub fn buildAarch64(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
-        source: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
 
         const zig_version = "0.16.0";
+        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
@@ -73,11 +78,11 @@ const ShieldcnModule = struct {
     pub fn @"test"(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
-        source: dagger.Directory,
     ) ![]const u8 {
         _ = self;
 
         const zig_version = "0.16.0";
+        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
@@ -104,11 +109,11 @@ const ShieldcnModule = struct {
     pub fn lint(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
-        source: dagger.Directory,
     ) ![]const u8 {
         _ = self;
 
         const zig_version = "0.16.0";
+        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
@@ -135,13 +140,13 @@ const ShieldcnModule = struct {
     pub fn container(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
-        source: dagger.Directory,
         arch: []const u8,
     ) !dagger.Container {
         _ = self;
 
         const zig_version = "0.16.0";
         const target_option = if (std.mem.eql(u8, arch, "amd64")) "-Dtarget=x86_64-linux-musl" else "-Dtarget=aarch64-linux-musl";
+        const source = try getSource(ctx);
 
         // Create a build container with Zig
         const base_ctr = try ctx.dag().container(null);
