@@ -10,7 +10,25 @@ permissions:
   id-token: write
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install melange
+        uses: chainguard-dev/actions/setup-melange@main
+
+      - name: Generate signing key
+        run: melange keygen
+
+      - name: Upload signing key
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-key
+          path: |
+            melange.rsa
+            melange.rsa.pub
+
   release:
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,9 +50,6 @@ jobs:
 
       - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
-
-      - name: Install apko
-        run: go install chainguard.dev/apko@latest
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -65,8 +80,11 @@ jobs:
           fi
           zig build -Doptimize=ReleaseFast -Dtarget=${TARGET}
 
-      - name: Generate signing key
-        run: melange keygen
+      - name: Download signing key
+        uses: actions/download-artifact@v4
+        with:
+          name: signing-key
+          path: .
 
       - name: Build APK with melange
         run: |
@@ -76,13 +94,11 @@ jobs:
             --source-dir . \
             --signing-key melange.rsa
 
-      - name: Upload APK and key
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: apk-${{ matrix.arch }}
-          path: |
-            packages/
-            melange.rsa.pub
+          path: packages/
 
   image:
     needs: release
@@ -91,15 +107,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download APKs and keys
+      - name: Download APKs
         uses: actions/download-artifact@v4
         with:
           pattern: apk-*
           merge-multiple: true
-          path: .
+          path: packages/
 
-      - name: Install melange
-        uses: chainguard-dev/actions/setup-melange@main
+      - name: Download signing key
+        uses: actions/download-artifact@v4
+        with:
+          name: signing-key
+          path: .
 
       - name: Install apko
         run: go install chainguard.dev/apko@latest
