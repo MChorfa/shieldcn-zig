@@ -2,5 +2,20 @@
   "name": "shieldcn-ci",
   "engineVersion": "v0.21.7",
   "sdk": "github.com/MChorfa/dagger-zig/sdk@v0.3.5",
-  "source": "."
+  "source": ".",
+  "exclude": [
+    ".git",
+    "zig-cache",
+    ".zig-cache",
+    "zig-out",
+    "zig-pkg",
+    "ci/.zig-cache",
+    ".dagger",
+    ".devin",
+    ".windsurf",
+    ".vscode",
+    ".idea",
+    "*.tmp",
+    "*.log"
+  ]
 }
