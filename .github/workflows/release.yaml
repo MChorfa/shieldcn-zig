@@ -65,18 +65,24 @@ jobs:
           fi
           zig build -Doptimize=ReleaseFast -Dtarget=${TARGET}
 
+      - name: Generate signing key
+        run: melange keygen
+
       - name: Build APK with melange
         run: |
           melange build melange.yaml \
             --arch ${{ matrix.arch }} \
             --out-dir packages/ \
-            --source-dir .
+            --source-dir . \
+            --signing-key melange.rsa
 
-      - name: Upload APK
+      - name: Upload APK and key
         uses: actions/upload-artifact@v4
         with:
           name: apk-${{ matrix.arch }}
-          path: packages/
+          path: |
+            packages/
+            melange.rsa.pub
 
   image:
     needs: release
@@ -85,12 +91,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download APKs
+      - name: Download APKs and keys
         uses: actions/download-artifact@v4
         with:
           pattern: apk-*
           merge-multiple: true
-          path: packages/
+          path: .
 
       - name: Install melange
         uses: chainguard-dev/actions/setup-melange@main
@@ -111,7 +117,8 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
             ghcr.io/${{ github.repository }}:latest \
             --arch amd64,arm64 \
-            --repository-append packages/
+            --repository-append packages/ \
+            --keyring-append melange.rsa.pub
 
       - name: Sign OCI image with cosign
         run: |
@@ -130,6 +137,7 @@ jobs:
           apko sbom apko.yaml \
             --arch amd64,arm64 \
             --repository-append packages/ \
+            --keyring-append melange.rsa.pub \
             --sbom-formats spdx-json \
             --output sbom.spdx.json
 
