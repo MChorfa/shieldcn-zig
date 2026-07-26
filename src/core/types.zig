@@ -144,6 +144,19 @@ pub const BadgeData = struct {
     value: []const u8,
     color: ?[]const u8 = null,
     link: ?[]const u8 = null,
+    allocator: ?std.mem.Allocator = null,
+    owned_label: bool = false,
+    owned_value: bool = false,
+    owned_color: bool = false,
+    owned_link: bool = false,
+
+    pub fn deinit(self: BadgeData) void {
+        const allocator = self.allocator orelse return;
+        if (self.owned_label) allocator.free(self.label);
+        if (self.owned_value) allocator.free(self.value);
+        if (self.owned_color) if (self.color) |c| allocator.free(c);
+        if (self.owned_link) if (self.link) |l| allocator.free(l);
+    }
 };
 
 // ------------------------------------------------------------------

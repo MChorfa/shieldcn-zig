@@ -5,14 +5,13 @@ const svg = @import("../render/svg.zig");
 const png = @import("../render/png.zig");
 const group = @import("../render/group.zig");
 const themes = @import("../render/themes.zig");
-const icons = @import("../icons/resolver.zig");
 const memo = @import("../db/memo.zig");
 const token_pool = @import("../db/token_pool.zig");
 const hex_util = @import("../util/hex.zig");
 const contrast = @import("../util/contrast.zig");
 const audit = @import("../util/audit.zig");
+const providers = @import("providers.zig");
 const static_provider = @import("../providers/static.zig");
-const npm = @import("../providers/npm.zig");
 
 /// shieldcn-zig — server/http.zig
 /// HTTP server using raw POSIX sockets (Zig 0.16 std.Io.net lacks listen() API).
@@ -219,102 +218,27 @@ pub const Server = struct {
             return;
         }
 
-        // Get badge data
-        var badge_data: types.BadgeData = undefined;
+        // Resolve badge data via provider registry.
+        var badge_data = try providers.resolveBadge(.{
+            .allocator = self.allocator,
+            .io = self.io,
+            .memo_store = &self.memo_store,
+            .token_pool = &self.token_pool,
+        }, route);
+        defer if (badge_data) |*bd| bd.deinit();
 
-        if (std.mem.eql(u8, route.provider, "badge")) {
-            badge_data = static_provider.parseStaticBadge(self.allocator, route.segments) catch .{ .label = "error", .value = "parse" };
-        } else if (std.mem.eql(u8, route.provider, "memo")) {
-            const key = if (route.segments.len > 1) route.segments[1] else "default";
-            if (self.memo_store.get(key)) |entry| {
-                badge_data = .{
-                    .label = entry.label,
-                    .value = entry.value,
-                    .color = if (entry.color) |c| try self.allocator.dupe(u8, c) else null,
-                };
-            } else {
-                badge_data = .{ .label = "memo", .value = "not found" };
-            }
-        } else if (std.mem.eql(u8, route.provider, "npm")) {
-            if (route.segments.len < 2) {
-                badge_data = .{ .label = "npm", .value = "invalid path" };
-            } else {
-                const metric = if (route.segments.len >= 3) route.segments[1] else "version";
-                const pkg = route.segments[route.segments.len - 1];
-
-                var npm_result: ?types.BadgeData = null;
-                if (std.mem.eql(u8, metric, "version")) {
-                    npm_result = npm.getNpmVersion(self.allocator, pkg, route.query.tag, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "downloads")) {
-                    const period = route.query.period orelse "last-month";
-                    npm_result = npm.getNpmDownloads(self.allocator, pkg, period, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "license")) {
-                    npm_result = npm.getNpmLicense(self.allocator, pkg, self.io) catch null;
-                }
-                badge_data = npm_result orelse types.BadgeData{ .label = "npm", .value = metric };
-            }
-        } else if (std.mem.eql(u8, route.provider, "github")) {
-            const github = @import("../providers/github.zig");
-            if (route.segments.len < 4) {
-                badge_data = .{ .label = "github", .value = "invalid path" };
-            } else {
-                const metric = route.segments[1];
-                const owner = route.segments[2];
-                const repo = route.segments[3];
-                const token = if (self.token_pool.next()) |t| t.value else null;
-
-                var github_result: ?types.BadgeData = null;
-                if (std.mem.eql(u8, metric, "stars")) {
-                    github_result = github.getGitHubStars(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "forks")) {
-                    github_result = github.getGitHubForks(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "issues")) {
-                    github_result = github.getGitHubIssues(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "pulls")) {
-                    github_result = github.getGitHubPulls(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "release")) {
-                    github_result = github.getGitHubRelease(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "commits")) {
-                    github_result = github.getGitHubCommits(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "contributors")) {
-                    github_result = github.getGitHubContributors(self.allocator, owner, repo, token, self.io) catch null;
-                }
-                badge_data = github_result orelse types.BadgeData{ .label = "github", .value = metric };
-            }
-        } else if (std.mem.eql(u8, route.provider, "gitlab")) {
-            const gitlab = @import("../providers/gitlab.zig");
-            if (route.segments.len < 4) {
-                badge_data = .{ .label = "gitlab", .value = "invalid path" };
-            } else {
-                const metric = route.segments[1];
-                const owner = route.segments[2];
-                const repo = route.segments[3];
-                const token = if (self.token_pool.next()) |t| t.value else null;
-
-                var gitlab_result: ?types.BadgeData = null;
-                if (std.mem.eql(u8, metric, "stars")) {
-                    gitlab_result = gitlab.getGitLabStars(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "forks")) {
-                    gitlab_result = gitlab.getGitLabForks(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "issues")) {
-                    gitlab_result = gitlab.getGitLabIssues(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "merge-requests")) {
-                    gitlab_result = gitlab.getGitLabMergeRequests(self.allocator, owner, repo, token, self.io) catch null;
-                } else if (std.mem.eql(u8, metric, "pipeline")) {
-                    const branch = if (route.segments.len > 4) route.segments[4] else "main";
-                    gitlab_result = gitlab.getGitLabPipeline(self.allocator, owner, repo, branch, token, self.io) catch null;
-                }
-                badge_data = gitlab_result orelse types.BadgeData{ .label = "gitlab", .value = metric };
-            }
-        } else {
-            badge_data = .{ .label = route.provider, .value = "n/a" };
+        if (badge_data == null) {
+            audit_status = 500;
+            respondError(self.allocator, client_fd, "error", "provider");
+            return;
         }
 
-        const label = route.query.label orelse badge_data.label;
-        const value = badge_data.value;
+        const resolved = badge_data.?;
+        const label = route.query.label orelse resolved.label;
+        const value = resolved.value;
 
         // Effective color: ?color= query param takes precedence over path color.
-        const effective_color = route.query.color orelse badge_data.color;
+        const effective_color = route.query.color orelse resolved.color;
 
         // For branded variant, the effective color IS the brand color — resolve
         // named colors to hex and pass to resolveTheme for the entire badge.
@@ -435,7 +359,8 @@ pub const Server = struct {
         for (spec_list.items) |spec| {
             // Reuse the static badge parser: it expects segments[1] = spec.
             var segs = [_][]const u8{ "badge", spec };
-            const bd = static_provider.parseStaticBadge(self.allocator, &segs) catch types.BadgeData{ .label = "badge", .value = "invalid" };
+            var bd = static_provider.parseStaticBadge(self.allocator, &segs) catch types.BadgeData{ .label = "badge", .value = "invalid" };
+            defer bd.deinit();
 
             // Per-badge color override (named color or hex) on the value side.
             var badge_colors = colors;

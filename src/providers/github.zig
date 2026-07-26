@@ -46,6 +46,9 @@ pub fn getGitHubStars(
         .label = "stars",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -81,6 +84,9 @@ pub fn getGitHubForks(
         .label = "forks",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -116,6 +122,9 @@ pub fn getGitHubIssues(
         .label = "issues",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -151,6 +160,9 @@ pub fn getGitHubPulls(
         .label = "pulls",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -184,6 +196,9 @@ pub fn getGitHubRelease(
         .label = "release",
         .value = try allocator.dupe(u8, tag_name.string),
         .link = try allocator.dupe(u8, html_url.string),
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -219,6 +234,9 @@ pub fn getGitHubCommits(
         .label = "commits",
         .value = try allocator.dupe(u8, date),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -255,5 +273,8 @@ pub fn getGitHubContributors(
         .label = "contributors",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }

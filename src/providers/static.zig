@@ -25,6 +25,10 @@ pub fn parseStaticBadge(allocator: std.mem.Allocator, segments: [][]const u8) !t
         .label = try replaceUnderscoresAlloc(allocator, label),
         .value = try replaceUnderscoresAlloc(allocator, message),
         .color = try allocator.dupe(u8, color),
+        .allocator = allocator,
+        .owned_label = true,
+        .owned_value = true,
+        .owned_color = true,
     };
 }
 
@@ -44,9 +48,7 @@ test "parseStaticBadge basic" {
     const allocator = std.testing.allocator;
     var segs = [_][]const u8{ "badge", "build-passing-green" };
     const data = try parseStaticBadge(allocator, &segs);
-    defer allocator.free(data.label);
-    defer allocator.free(data.value);
-    defer allocator.free(data.color.?);
+    defer data.deinit();
     try std.testing.expectEqualStrings("build", data.label);
     try std.testing.expectEqualStrings("passing", data.value);
     try std.testing.expectEqualStrings("green", data.color.?);
@@ -56,9 +58,7 @@ test "parseStaticBadge with underscores" {
     const allocator = std.testing.allocator;
     var segs = [_][]const u8{ "badge", "hello_world-message_here-blue" };
     const data = try parseStaticBadge(allocator, &segs);
-    defer allocator.free(data.label);
-    defer allocator.free(data.value);
-    defer allocator.free(data.color.?);
+    defer data.deinit();
     try std.testing.expectEqualStrings("hello world", data.label);
     try std.testing.expectEqualStrings("message here", data.value);
 }

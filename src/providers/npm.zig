@@ -37,6 +37,9 @@ pub fn getNpmVersion(allocator: std.mem.Allocator, pkg: []const u8, tag: ?[]cons
         .label = "npm",
         .value = try std.fmt.allocPrint(allocator, "v{s}", .{version.string}),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -68,6 +71,9 @@ pub fn getNpmDownloads(allocator: std.mem.Allocator, pkg: []const u8, period: []
         .label = "downloads",
         .value = try std.fmt.allocPrint(allocator, "{s}{s}", .{ formatted, suffix }),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -97,6 +103,9 @@ pub fn getNpmLicense(allocator: std.mem.Allocator, pkg: []const u8, io: std.Io) 
         .label = "license",
         .value = try allocator.dupe(u8, license_str),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 

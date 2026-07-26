@@ -66,10 +66,10 @@ jobs:
             ${{ runner.os }}-zig-
 
       - name: Dagger Lint
-        run: dagger call lint --arg0=.
+        run: dagger call lint
 
       - name: Dagger Test
-        run: dagger call test --arg0=.
+        run: dagger call test
 
       - name: Build binary
         run: |

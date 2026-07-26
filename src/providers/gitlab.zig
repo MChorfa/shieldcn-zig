@@ -44,6 +44,9 @@ pub fn getGitLabStars(
         .label = "stars",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -79,6 +82,9 @@ pub fn getGitLabForks(
         .label = "forks",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -122,6 +128,9 @@ pub fn getGitLabIssues(
         .label = "issues",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -161,6 +170,9 @@ pub fn getGitLabMergeRequests(
         .label = "merge requests",
         .value = try allocator.dupe(u8, formatted),
         .link = link,
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
@@ -205,6 +217,9 @@ pub fn getGitLabPipeline(
         .value = try allocator.dupe(u8, status.string),
         .link = link,
         .color = pipelineColor(status.string),
+        .allocator = allocator,
+        .owned_value = true,
+        .owned_link = true,
     };
 }
 
