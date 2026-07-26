@@ -7,6 +7,16 @@
   <img src="docs/badges/license-MIT-orange.svg" alt="license">
 </p>
 
+<p align="center">
+  <img src="docs/badges/pure-zig.svg" alt="pure zig">
+  <img src="docs/badges/airgap-ready.svg" alt="airgap ready">
+  <img src="docs/badges/offline-mode.svg" alt="offline mode">
+  <img src="docs/badges/slsa-level-3.svg" alt="slsa level 3">
+  <img src="docs/badges/multi-arch.svg" alt="multi arch">
+  <img src="docs/badges/dagger-powered.svg" alt="dagger powered">
+  <img src="docs/badges/ckodex-compliant.svg" alt="ckodex compliant">
+</p>
+
 <p align="center"><strong>A clean-room, pure-Zig badge engine</strong> with SVG, PNG, and JSON output, six visual variants, and multi-provider support. Built for self-hosting and governed CI/CD.</p>
 
 ## Table of Contents

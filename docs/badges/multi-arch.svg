@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="167" height="28" role="img" aria-label="multi arch amd64+aarch64">
+  <title>multi arch amd64+aarch64</title>
+  <g transform="translate(0,0)">
+    <clipPath id="r">
+      <rect width="167" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r)">
+    <rect width="73" height="28" fill="#27272a"/>
+    <rect x="73" width="95" height="28" fill="#fe7d37"/>
+    <rect x="73" width="1" height="28" fill="#000000" opacity="0.15"/>
+    <text x="10.0" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">multi arch</text>
+    <text x="75.5" y="18.2" fill="#18181b" font-family="Inter, sans-serif" font-size="12" font-weight="500">amd64+aarch64</text>
+    </g>
+  </g>
+</svg>

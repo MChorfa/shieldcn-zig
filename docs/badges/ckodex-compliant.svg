@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="142" height="28" role="img" aria-label="ckodex compliant yes">
+  <title>ckodex compliant yes</title>
+  <g transform="translate(0,0)">
+    <clipPath id="r">
+      <rect width="142" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r)">
+    <rect width="142" height="28" fill="#6D28D9" rx="6"/>
+    <text x="10.0" y="18.2" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">ckodex compliant</text>
+    <text x="113.0" y="18.2" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="500">yes</text>
+    </g>
+  </g>
+</svg>

@@ -594,6 +594,7 @@
   <div class="nav-inner">
     <a href="#" class="brand"><span class="dot"></span> shieldcn-zig</a>
     <ul class="nav-links">
+      <li><a href="#create">Create</a></li>
       <li><a href="#variants">Variants</a></li>
       <li><a href="#colors">Colors</a></li>
       <li><a href="#sizes">Sizes</a></li>
@@ -630,6 +631,46 @@
 
 <div class="page-shell">
 <main>
+
+<!-- ================================================================ -->
+<section id="create">
+  <div class="section-header"><span class="num">00</span><h2>Create a Badge</h2></div>
+  <p class="section-desc">
+    Static badges are rendered locally from the URL path and query parameters.
+    No external API calls are needed, so they work fully offline and in air-gapped environments.
+  </p>
+
+  <pre>curl http://localhost:5335/badge/build-passing-green.svg
+curl http://localhost:5335/badge/coverage-92%25-blue.svg
+curl "http://localhost:5335/badge/license-MIT-orange.svg?variant=branded"</pre>
+
+  <div class="subsection-label">URL format</div>
+  <pre>/badge/&lt;label&gt;-&lt;message&gt;-&lt;color&gt;.svg
+/badge/&lt;label&gt;-&lt;message&gt;-&lt;color&gt;.png
+/badge/&lt;label&gt;-&lt;message&gt;-&lt;color&gt;.json</pre>
+
+  <p>
+    Words are separated by hyphens. The final segment before the extension is the color.
+    For values that contain hyphens, use <code>%2D</code> or override the label/message with query parameters.
+  </p>
+
+  <div class="subsection-label">Unique example badges</div>
+  <div class="grid grid-4">
+    <div class="card"><div class="card-label">pure zig</div><div class="badge-display"><img src="badges/pure-zig.svg" alt="pure zig v0.16.0"></div></div>
+    <div class="card"><div class="card-label">airgap ready</div><div class="badge-display"><img src="badges/airgap-ready.svg" alt="airgap ready"></div></div>
+    <div class="card"><div class="card-label">offline mode</div><div class="badge-display"><img src="badges/offline-mode.svg" alt="offline mode"></div></div>
+    <div class="card"><div class="card-label">slsa level 3</div><div class="badge-display"><img src="badges/slsa-level-3.svg" alt="slsa level 3 attested"></div></div>
+    <div class="card"><div class="card-label">multi arch</div><div class="badge-display"><img src="badges/multi-arch.svg" alt="multi arch"></div></div>
+    <div class="card"><div class="card-label">dagger powered</div><div class="badge-display"><img src="badges/dagger-powered.svg" alt="dagger powered"></div></div>
+    <div class="card"><div class="card-label">ckodex compliant</div><div class="badge-display"><img src="badges/ckodex-compliant.svg" alt="ckodex compliant"></div></div>
+  </div>
+
+  <div class="subsection-label">Offline and self-hosted</div>
+  <p>
+    The static provider is self-contained. Run <code>zig build run -- serve</code> and every badge above is generated locally.
+    Live providers (npm, GitHub, GitLab) fetch data only when you choose to use them.
+  </p>
+</section>
 
 <!-- ================================================================ -->
 <section id="variants">
