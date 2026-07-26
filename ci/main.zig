@@ -96,7 +96,7 @@ const ShieldcnModule = struct {
             "zig",
             "build",
             "test",
-        }, null, null, null, null, null, null, null, null, null, null, null);
+        }, null, null, null, null, null, null, null, null, null, null);
 
         _ = try test_run.sync();
         return "tests passed";
@@ -128,7 +128,7 @@ const ShieldcnModule = struct {
             "zig",
             "build",
             "check",
-        }, null, null, null, null, null, null, null, null, null, null, null);
+        }, null, null, null, null, null, null, null, null, null, null);
 
         _ = try check.sync();
         return "lint passed";
