@@ -14,7 +14,7 @@ environment:
     packages:
       - alpine-baselayout-data
       - build-base
-      - ca-certificates
+      - ca-certificates-bundle
       - curl
       - tar
       - xz
