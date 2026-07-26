@@ -24,8 +24,8 @@ environment:
 pipeline:
   - runs: |
       # Install Zig 0.16.0 (Alpine 3.20 ships an older version)
-      curl -L https://ziglang.org/download/0.16.0/zig-linux-${ARCH}-0.16.0.tar.xz | tar -xJ -C /tmp
-      export PATH="/tmp/zig-linux-${ARCH}-0.16.0:$PATH"
+      curl -L https://ziglang.org/download/0.16.0/zig-${ARCH}-linux-0.16.0.tar.xz | tar -xJ -C /tmp
+      export PATH="/tmp/zig-${ARCH}-linux-0.16.0:$PATH"
 
       # Build static binary targeting musl
       zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-linux-musl
