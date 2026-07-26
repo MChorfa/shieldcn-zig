@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .zigimg = .{
-            .url = "git+https://github.com/zigimg/zigimg#master",
-            .hash = "zigimg-0.1.0-8_eo2sGbFwCrsBjkTTP-kinCH62m5vmYDHQnQcngFuwh",
+            .url = "git+https://github.com/zigimg/zigimg#096115a3eeae1a4c477496d575f1f1f74865387c",
+            .hash = "zigimg-0.1.0-8_eo2mHBFwDLhWjXriR17_b7VF6qML1f98Xokp7ZZbop",
         },
         .dagger_sdk = .{
             .url = "git+https://github.com/MChorfa/dagger-zig#v0.3.5",

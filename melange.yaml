@@ -14,14 +14,19 @@ environment:
     packages:
       - alpine-baselayout-data
       - build-base
-      - zig
+      - curl
+      - tar
+      - xz
       - freetype-dev
       - sqlite-dev
 
 pipeline:
   - runs: |
+      # Install Zig 0.16.0 (Alpine 3.20 ships an older version)
+      curl -L https://ziglang.org/download/0.16.0/zig-linux-${ARCH}-0.16.0.tar.xz | tar -xJ -C /tmp
+      export PATH="/tmp/zig-linux-${ARCH}-0.16.0:$PATH"
+
       # Build static binary targeting musl
-      # melange sets ARCH environment variable (x86_64 or aarch64)
       zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-linux-musl
 
   - runs: |
