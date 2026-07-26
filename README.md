@@ -2,9 +2,9 @@
 
 <p align="center">
   <img src="docs/badges/build-passing-green.svg" alt="build">
-  <img src="docs/badges/coverage-92%25-blue.svg" alt="coverage">
+  <img src="docs/badges/github-stars.svg" alt="stars">
+  <img src="docs/badges/github-forks.svg" alt="forks">
   <img src="docs/badges/license-MIT-orange.svg" alt="license">
-  <img src="docs/badges/version-1.0.0-blueviolet.svg" alt="version">
 </p>
 
 <p align="center"><strong>A clean-room, pure-Zig badge engine</strong> with SVG, PNG, and JSON output, six visual variants, and multi-provider support. Built for self-hosting and governed CI/CD.</p>

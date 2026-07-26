@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="28" role="img" aria-label="stars 1">
+  <title>stars 1</title>
+  <g transform="translate(0,0)">
+    <clipPath id="r">
+      <rect width="64" height="28" rx="6" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#r)">
+    <rect width="64" height="28" fill="#27272a" rx="6"/>
+    <text x="10.0" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500" opacity="0.85">stars</text>
+    <text x="47.2" y="18.2" fill="#fafafa" font-family="Inter, sans-serif" font-size="12" font-weight="500">1</text>
+    </g>
+  </g>
+</svg>
