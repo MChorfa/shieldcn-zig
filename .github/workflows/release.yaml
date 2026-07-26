@@ -34,10 +34,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        run: |
-          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_linux_amd64.tar.gz
-          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
-          rm apko.tar.gz
+        uses: chainguard-dev/actions/setup-apko@main
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -99,10 +96,7 @@ jobs:
         uses: chainguard-dev/actions/setup-melange@main
 
       - name: Install apko
-        run: |
-          curl -L -o apko.tar.gz https://github.com/chainguard-dev/apko/releases/latest/download/apko_linux_amd64.tar.gz
-          sudo tar -xzf apko.tar.gz -C /usr/local/bin apko
-          rm apko.tar.gz
+        uses: chainguard-dev/actions/setup-apko@main
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3

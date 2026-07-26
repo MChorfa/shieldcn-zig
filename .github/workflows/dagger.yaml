@@ -49,7 +49,7 @@ jobs:
         run: dagger call build --arg0=. --output=./build-amd64
 
       - name: Dagger Build (aarch64)
-        run: dagger call buildAarch64 --arg0=. --output=./build-aarch64
+        run: dagger call build-aarch-64 --arg0=. --output=./build-aarch64
 
       - name: Dagger Container (amd64)
         run: dagger call container --arg0=. --arg1=amd64 --export=./shieldcn-amd64.tar
