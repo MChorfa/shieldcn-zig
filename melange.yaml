@@ -22,7 +22,7 @@ pipeline:
   - runs: |
       # Build static binary targeting musl
       # melange sets ARCH environment variable (x86_64 or aarch64)
-      zig build -Doptimize=ReleaseFast -Dtarget=${{target.arch}}-linux-musl
+      zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-linux-musl
 
   - runs: |
       install -Dm755 zig-out/bin/shieldcn "${{targets.destdir}}"/usr/bin/shieldcn

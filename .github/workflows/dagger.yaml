@@ -39,9 +39,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-zig-
 
-      - name: Fetch dependencies
-        run: zig fetch
-
       - name: Dagger Lint
         run: dagger call lint --source=.
 
