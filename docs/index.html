@@ -1035,19 +1035,19 @@ curl http://localhost:5335/health</pre>
   <pre>curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh</pre>
 
   <div class="subsection-label">Run CI locally</div>
-  <pre>dagger call lint
-dagger call test
-dagger call build export --path=./build-amd64
-dagger call build-aarch-64 export --path=./build-aarch64
-dagger call container --arch=amd64 export --path=./shieldcn-amd64.tar</pre>
+  <pre>dagger call lint --arg0=.
+dagger call test --arg0=.
+dagger call build --arg0=. export --path=./build-amd64
+dagger call build-aarch-64 --arg0=. export --path=./build-aarch64
+dagger call container --arg0=. --arg1=amd64 export --path=./shieldcn-amd64.tar</pre>
 
   <div class="subsection-label">Multi-arch OCI image</div>
-  <pre>dagger call container --arch=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
-dagger call container --arch=aarch64 publish ghcr.io/mchorfa/shieldcn-zig:latest-arm64</pre>
+  <pre>dagger call container --arg0=. --arg1=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
+dagger call container --arg0=. --arg1=aarch64 publish ghcr.io/mchorfa/shieldcn-zig:latest-arm64</pre>
 
   <div class="subsection-label">Workflow wiring</div>
   <p>
-    <code>.github/workflows/dagger.yaml</code> runs <code>dagger call lint test</code> on every PR.
+    <code>.github/workflows/dagger.yaml</code> runs lint, test, and multi-arch builds on every PR.
     <code>.github/workflows/release.yaml</code> builds both architectures, publishes OCI images, and signs them with Sigstore keyless GitHub OIDC.
   </p>
 </section>

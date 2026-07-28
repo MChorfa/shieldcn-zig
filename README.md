@@ -138,14 +138,14 @@ It is airgap-ready: the module uses pinned base/runtime images and a vendored Zi
 curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.21.7 sh
 
 # Run CI locally
-dagger call lint
-dagger call test
-dagger call build export --path=./build-amd64
-dagger call build-aarch-64 export --path=./build-aarch64
-dagger call container --arch=amd64 export --path=./shieldcn-amd64.tar
+dagger call lint --arg0=.
+dagger call test --arg0=.
+dagger call build --arg0=. export --path=./build-amd64
+dagger call build-aarch-64 --arg0=. export --path=./build-aarch64
+dagger call container --arg0=. --arg1=amd64 export --path=./shieldcn-amd64.tar
 
 # Publish an OCI image
-dagger call container --arch=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
+dagger call container --arg0=. --arg1=amd64 publish ghcr.io/mchorfa/shieldcn-zig:latest
 ```
 
 | Function | CLI name | Output | Description |
