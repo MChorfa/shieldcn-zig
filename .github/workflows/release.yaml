@@ -66,10 +66,10 @@ jobs:
             ${{ runner.os }}-zig-
 
       - name: Dagger Lint
-        run: dagger call lint
+        run: dagger call lint --arg0=.
 
       - name: Dagger Test
-        run: dagger call test
+        run: dagger call test --arg0=.
 
       - name: Build binary
         run: |
@@ -132,11 +132,14 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Set image name
+        run: echo "IMAGE_NAME=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Publish to GHCR
         run: |
           apko publish apko.yaml \
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
-            ghcr.io/${{ github.repository }}:latest \
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
+            ${{ env.IMAGE_NAME }}:latest \
             --arch amd64,arm64 \
             --repository-append packages/ \
             --keyring-append melange.rsa.pub
@@ -145,13 +148,13 @@ jobs:
         run: |
           cosign sign \
             --yes \
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
 
       - name: Sign OCI image latest with cosign
         run: |
           cosign sign \
             --yes \
-            ghcr.io/${{ github.repository }}:latest
+            ${{ env.IMAGE_NAME }}:latest
 
       - name: Generate SBOM
         run: |

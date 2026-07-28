@@ -12,50 +12,55 @@ const ShieldcnModule = struct {
     pub fn build(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
-        return buildForTarget(ctx, "x86_64-linux-musl");
+        return buildForTarget(ctx, src, "x86_64-linux-musl");
     }
 
     /// Build the project for aarch64-linux-musl.
     pub fn buildAarch64(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) !dagger.Directory {
         _ = self;
-        return buildForTarget(ctx, "aarch64-linux-musl");
+        return buildForTarget(ctx, src, "aarch64-linux-musl");
     }
 
-    /// Run `zig build check` to validate compilation and tests.
-    pub fn @"test"(
-        self: *const ShieldcnModule,
-        ctx: *dagger.module.Context,
-    ) ![]const u8 {
-        _ = self;
-        const ctr = try buildContainer(ctx, null);
-        _ = try ctr.sync();
-        return "tests passed (check mode)";
-    }
-
-    /// Alias for `test` — kept for CI symmetry.
+    /// Run `zig build check` to validate compilation.
     pub fn lint(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
     ) ![]const u8 {
         _ = self;
-        const ctr = try buildContainer(ctx, null);
+        const ctr = try buildContainer(ctx, src, null);
         _ = try ctr.sync();
         return "lint passed";
     }
 
+    /// Alias for `lint` — kept for CI symmetry.
+    pub fn @"test"(
+        self: *const ShieldcnModule,
+        ctx: *dagger.module.Context,
+        src: dagger.Directory,
+    ) ![]const u8 {
+        _ = self;
+        const ctr = try buildContainer(ctx, src, null);
+        _ = try ctr.sync();
+        return "tests passed (check mode)";
+    }
+
     /// Build a runnable Alpine container with the compiled binary.
-    /// arch: "amd64" or "aarch64".
     pub fn container(
         self: *const ShieldcnModule,
         ctx: *dagger.module.Context,
+        src: dagger.Directory,
         arch: []const u8,
     ) !dagger.Container {
         _ = self;
+
         const target = if (std.mem.eql(u8, arch, "amd64"))
             "x86_64-linux-musl"
         else if (std.mem.eql(u8, arch, "aarch64"))
@@ -63,7 +68,7 @@ const ShieldcnModule = struct {
         else
             return error.InvalidArch;
 
-        const build_out = try buildForTarget(ctx, target);
+        const build_out = try buildForTarget(ctx, src, target);
         const binary = try (try build_out.file("./bin/shieldcn")).id();
 
         const alpine = try ctx.dag().container(null);
@@ -90,17 +95,23 @@ const ShieldcnModule = struct {
 };
 
 /// Build for a musl target and return the `zig-out` directory.
-fn buildForTarget(ctx: *dagger.module.Context, target: []const u8) !dagger.Directory {
-    const ctr = try buildContainer(ctx, target);
+fn buildForTarget(
+    ctx: *dagger.module.Context,
+    src: dagger.Directory,
+    target: []const u8,
+) !dagger.Directory {
+    const ctr = try buildContainer(ctx, src, target);
     const out = try ctr.directory("./zig-out", null);
     return out;
 }
 
 /// Return a container that has the source mounted and the build step executed.
 /// Pass `null` for target to run `zig build check` instead.
-fn buildContainer(ctx: *dagger.module.Context, target: ?[]const u8) !dagger.Container {
-    const current_module = try ctx.dag().currentModule();
-    const src = try current_module.source();
+fn buildContainer(
+    ctx: *dagger.module.Context,
+    src: dagger.Directory,
+    target: ?[]const u8,
+) !dagger.Container {
     const src_id = (try src.id()).value;
 
     const base_ctr = try ctx.dag().container(null);
