@@ -156,27 +156,11 @@ jobs:
             --yes \
             ${{ env.IMAGE_NAME }}:latest
 
-      - name: Generate SBOM
-        run: |
-          apko sbom apko.yaml \
-            --arch amd64,arm64 \
-            --repository-append packages/ \
-            --keyring-append melange.rsa.pub \
-            --sbom-formats spdx-json \
-            --output sbom.spdx.json
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.spdx.json
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             packages/shieldcn-*.apk
-            sbom.spdx.json
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
