@@ -4,7 +4,7 @@ const dagger = @import("dagger_sdk");
 /// shieldcn-zig — ci/main.zig
 /// Dagger module for building, testing, and packaging the shieldcn server.
 const zig_version = "0.16.0";
-const base_image = "kassany/alpine-ziglang:" ++ zig_version;
+const base_image = "alpine:3.20";
 const runtime_image = "alpine:3.20";
 
 const ShieldcnModule = struct {
@@ -118,11 +118,17 @@ fn buildContainer(
     const base = try base_ctr.from(base_image, null);
 
     const with_deps = try base.withExec(&.{
-        "apk",
-        "add",
-        "--no-cache",
-        "git",
-        "ca-certificates",
+        "sh",
+        "-c",
+        "apk add --no-cache curl tar xz git ca-certificates && " ++
+        "ARCH=$(uname -m) && " ++
+        "if [ \"$ARCH\" = \"x86_64\" ]; then ZIG_ARCH=\"x86_64\"; " ++
+        "elif [ \"$ARCH\" = \"aarch64\" ]; then ZIG_ARCH=\"aarch64\"; " ++
+        "else echo \"Unsupported architecture: $ARCH\" && exit 1; " ++
+        "fi && " ++
+        "curl -L https://ziglang.org/download/" ++ zig_version ++ "/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ ".tar.xz | tar -xJ -C /usr/local && " ++
+        "ln -s /usr/local/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ "/zig /usr/local/bin/zig && " ++
+        "zig version",
     }, null, null, null, null, null, null, null, null, null, null);
 
     const with_src = try with_deps.withDirectory("/src-ro", src_id, null, null, null, null, null, null);
