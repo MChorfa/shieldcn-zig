@@ -40,10 +40,10 @@ jobs:
             ${{ runner.os }}-zig-
 
       - name: Dagger Lint
-        run: dagger call lint
+        run: dagger --debug call lint
 
       - name: Dagger Test
-        run: dagger call test
+        run: dagger --debug call test
 
       - name: Dagger Build (amd64)
         run: dagger call build export --path=./build-amd64
