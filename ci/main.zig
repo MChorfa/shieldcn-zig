@@ -106,7 +106,15 @@ fn buildContainer(ctx: *dagger.module.Context, target: ?[]const u8) !dagger.Cont
     const base_ctr = try ctx.dag().container(null);
     const base = try base_ctr.from(base_image, null);
 
-    const with_src = try base.withDirectory("/src-ro", src_id, null, null, null, null, null, null);
+    const with_deps = try base.withExec(&.{
+        "apk",
+        "add",
+        "--no-cache",
+        "git",
+        "ca-certificates",
+    }, null, null, null, null, null, null, null, null, null, null);
+
+    const with_src = try with_deps.withDirectory("/src-ro", src_id, null, null, null, null, null, null);
     const workdir = try with_src.withWorkdir("/src-ro", null);
 
     const prep = try workdir.withExec(&.{
