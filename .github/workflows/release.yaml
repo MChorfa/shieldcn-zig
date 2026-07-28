@@ -181,23 +181,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate SLSA Provenance
-        uses: slsa-framework/slsa-github-generator@v2
-        with:
-          artifact: packages/shieldcn-*.apk
-          output-name: provenance.intoto.jsonl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload SLSA Provenance
-        uses: actions/upload-artifact@v4
-        with:
-          name: provenance
-          path: provenance.intoto.jsonl
-
-      - name: Attach SLSA Provenance to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: provenance.intoto.jsonl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload SLSA Provenance placeholder
+        run: echo 'SLSA provenance removed pending a correct generator_generic_slsa3 reusable workflow job'
