@@ -104,30 +104,45 @@ pub const ResolvedColors = struct {
 // Full badge render configuration
 // ------------------------------------------------------------------
 
+/// A single icon path with its own fill color (for embedded SVGs).
+pub const IconPathData = struct {
+    d: []const u8,
+    fill: ?[]const u8 = null,
+};
+
 pub const BadgeConfig = struct {
     label: []const u8,
     value: []const u8,
     icon: ?[]const u8 = null,
     icon_view_box: ?[]const u8 = null,
     icon_fill: ?[]const u8 = null,
-    icon_paths: ?[][]const u8 = null,
+    /// Icon fill opacity (upstream uses .85 for inline icons).
+    icon_fill_opacity: ?f32 = null,
+    /// Multi-path icon data (for embedded SVGs with multiple paths/fills).
+    /// When present, the render code emits each path with its own fill.
+    icon_paths: ?[]IconPathData = null,
+    /// Source viewBox max dimension for scale calculation.
+    /// Inline icons use 24.0; embedded icons may use 100.0, 256.0, etc.
+    icon_viewbox_size: f32 = 24.0,
     icon_is_stroke: bool = false,
     icon_stroke_width: f32 = 2.0,
     style: BadgeStyle = .default,
-    size: BadgeSize = .sm,
+    // Default size is `default` (height=32) to match upstream shieldcn output.
+    size: BadgeSize = .default,
     colors: ResolvedColors,
     status_color: ?[]const u8 = null,
     status_dot: bool = false,
     value_color: ?[]const u8 = null,
     label_text_color: ?[]const u8 = null,
-    label_opacity: f32 = 0.85,
-    height: u32 = 28,
-    font_size: u32 = 12,
+    // shadcn label opacity (upstream uses fill-opacity=".7").
+    label_opacity: f32 = 0.7,
+    height: u32 = 32,
+    font_size: u32 = 14,
     radius: u32 = 6,
-    pad_x: u32 = 10,
-    icon_size: u32 = 14,
-    gap: u32 = 5,
-    label_gap: u32 = 6,
+    pad_x: u32 = 16,
+    icon_size: u32 = 16,
+    gap: u32 = 6,
+    label_gap: u32 = 7,
     split: bool = false,
     mode: ColorMode = .dark,
     brand_color: ?[]const u8 = null,
@@ -177,7 +192,7 @@ pub fn getSizePreset(size: BadgeSize) SizePreset {
     return switch (size) {
         .xs => .{ .height = 20, .font_size = 10, .radius = 4, .pad_x = 6, .icon_size = 10, .gap = 3, .label_gap = 4 },
         .sm => .{ .height = 28, .font_size = 12, .radius = 6, .pad_x = 10, .icon_size = 14, .gap = 5, .label_gap = 6 },
-        .default => .{ .height = 32, .font_size = 13, .radius = 6, .pad_x = 12, .icon_size = 16, .gap = 6, .label_gap = 7 },
+        .default => .{ .height = 32, .font_size = 14, .radius = 6, .pad_x = 16, .icon_size = 16, .gap = 6, .label_gap = 7 },
         .lg => .{ .height = 40, .font_size = 14, .radius = 8, .pad_x = 16, .icon_size = 18, .gap = 7, .label_gap = 8 },
     };
 }

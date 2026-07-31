@@ -1,0 +1,18 @@
+.{
+    .fingerprint = 0x21a2709aecd97a2d,
+    .name = .dagger_sdk,
+    .version = "0.3.4",
+    // Must match the repo-root build.zig.zon baseline.
+    .minimum_zig_version = "0.16.0",
+
+    // No external dependencies — the SDK links only against Zig's stdlib
+    // so it can be vendored into air-gapped environments without a
+    // dependency audit.
+    .dependencies = .{},
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

@@ -16,6 +16,8 @@ pub const Context = struct {
     io: std.Io,
     memo_store: *memo.MemoStore,
     token_pool: *token_pool.TokenPool,
+    /// When true, network providers return "offline" badges immediately.
+    offline: bool = false,
 };
 
 pub const ResolveError = error{OutOfMemory};
@@ -50,11 +52,12 @@ pub fn resolveBadge(ctx: Context, route: router.Route) ResolveError!?types.Badge
     }
 
     if (std.mem.eql(u8, route.provider, "npm")) {
+        if (ctx.offline) return .{ .label = "npm", .value = "offline" };
         if (route.segments.len < 2) return .{ .label = "npm", .value = "invalid path" };
         const metric = if (route.segments.len >= 3) route.segments[1] else "version";
         const pkg = route.segments[route.segments.len - 1];
 
-        if (std.mem.eql(u8, metric, "version")) {
+        if (std.mem.eql(u8, metric, "version") or std.mem.eql(u8, metric, "v")) {
             return npm.getNpmVersion(ctx.allocator, pkg, route.query.tag, ctx.io) catch null;
         } else if (std.mem.eql(u8, metric, "downloads")) {
             const period = route.query.period orelse "last-month";
@@ -66,6 +69,7 @@ pub fn resolveBadge(ctx: Context, route: router.Route) ResolveError!?types.Badge
     }
 
     if (std.mem.eql(u8, route.provider, "github")) {
+        if (ctx.offline) return .{ .label = "github", .value = "offline" };
         if (route.segments.len < 4) return .{ .label = "github", .value = "invalid path" };
         const metric = route.segments[1];
         const owner = route.segments[2];
@@ -92,6 +96,7 @@ pub fn resolveBadge(ctx: Context, route: router.Route) ResolveError!?types.Badge
     }
 
     if (std.mem.eql(u8, route.provider, "gitlab")) {
+        if (ctx.offline) return .{ .label = "gitlab", .value = "offline" };
         if (route.segments.len < 4) return .{ .label = "gitlab", .value = "invalid path" };
         const metric = route.segments[1];
         const owner = route.segments[2];

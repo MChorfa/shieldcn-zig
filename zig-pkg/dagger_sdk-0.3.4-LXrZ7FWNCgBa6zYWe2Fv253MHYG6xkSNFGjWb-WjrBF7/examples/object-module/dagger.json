@@ -1,0 +1,8 @@
+{
+  "name": "object-module",
+  "engineVersion": "v0.21.0",
+  "sdk": {
+    "source": "../../sdk"
+  },
+  "source": "."
+}

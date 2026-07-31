@@ -26,6 +26,7 @@ pub const Route = struct {
         if (self.query.theme) |l| allocator.free(l);
         if (self.query.tag) |l| allocator.free(l);
         if (self.query.period) |l| allocator.free(l);
+        if (self.query.wcag) |l| allocator.free(l);
     }
 };
 

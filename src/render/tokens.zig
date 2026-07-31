@@ -95,7 +95,7 @@ pub fn getButtonStyle(variant: []const u8, mode: []const u8, custom_color: ?[]co
         const brand = custom_color orelse mc.primary;
         const brand_rgb = hex.parseHex(brand) orelse hex.parseHex("#27272a").?;
         const is_light_brand = hex.isLight(brand_rgb);
-        const brand_fg = if (is_light_brand) "#18181b" else "#ffffff";
+        const brand_fg = if (is_light_brand) "#18181b" else "#fff";
         return .{ .bg = brand, .fg = brand_fg, .border = null, .border_radius = radius };
     }
 
@@ -133,7 +133,7 @@ test "getButtonStyle outline dark" {
 test "getButtonStyle branded with color" {
     const style = getButtonStyle("branded", "dark", "#ff6b6b");
     try std.testing.expectEqualStrings("#ff6b6b", style.bg);
-    try std.testing.expectEqualStrings("#ffffff", style.fg);
+    try std.testing.expectEqualStrings("#fff", style.fg);
 }
 
 test "getButtonStyle branded light color gets dark fg" {

@@ -1,0 +1,8 @@
+{
+  "name": "e2e-module",
+  "engineVersion": "v0.21.0",
+  "sdk": {
+    "source": "github.com/MChorfa/dagger-zig/sdk@v0.3.2"
+  },
+  "source": "."
+}

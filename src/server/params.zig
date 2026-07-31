@@ -5,7 +5,8 @@ const types = @import("../core/types.zig");
 /// Query string normalization and badge param extraction.
 pub const BadgeParams = struct {
     variant: types.BadgeStyle = .default,
-    size: types.BadgeSize = .sm,
+    // Default size is `default` (height=32) to match upstream shieldcn output.
+    size: types.BadgeSize = .default,
     mode: types.ColorMode = .dark,
     font: types.BadgeFont = .inter,
     split: bool = false,
@@ -17,7 +18,8 @@ pub const BadgeParams = struct {
     value_color: ?[]const u8 = null,
     label_text_color: ?[]const u8 = null,
     label: ?[]const u8 = null,
-    label_opacity: f32 = 0.85,
+    // shadcn label opacity (upstream uses fill-opacity=".7").
+    label_opacity: f32 = 0.7,
     gradient: ?[]const u8 = null,
     height: ?u32 = null,
     font_size: ?u32 = null,
@@ -29,6 +31,10 @@ pub const BadgeParams = struct {
     theme: ?[]const u8 = null,
     tag: ?[]const u8 = null,
     period: ?[]const u8 = null,
+    /// WCAG 3.0 compliance mode. When "3", uses APCA-compliant shade-800
+    /// background colors and APCA-based foreground selection.
+    /// Default is "off" (upstream-compatible shade-600 colors).
+    wcag: ?[]const u8 = null,
 };
 
 /// Parse query string into BadgeParams. Keys are compared case-insensitively.
@@ -110,6 +116,8 @@ pub fn parseQueryString(allocator: std.mem.Allocator, query: []const u8) !BadgeP
             params.tag = decoded;
         } else if (eqlIgnoreCase(key, "period")) {
             params.period = decoded;
+        } else if (eqlIgnoreCase(key, "wcag")) {
+            params.wcag = decoded;
         } else {
             allocator.free(decoded);
         }
@@ -173,6 +181,7 @@ test "parseQueryString basic params" {
         if (params.theme) |l| allocator.free(l);
         if (params.tag) |l| allocator.free(l);
         if (params.period) |l| allocator.free(l);
+        if (params.wcag) |l| allocator.free(l);
     }
 
     try std.testing.expectEqual(types.BadgeStyle.branded, params.variant);

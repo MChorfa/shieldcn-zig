@@ -12,6 +12,8 @@ const contrast = @import("../util/contrast.zig");
 const audit = @import("../util/audit.zig");
 const providers = @import("providers.zig");
 const static_provider = @import("../providers/static.zig");
+const auto_icons = @import("../icons/auto.zig");
+const icon_resolver = @import("../icons/resolver.zig");
 
 /// shieldcn-zig — server/http.zig
 /// HTTP server using raw POSIX sockets (Zig 0.16 std.Io.net lacks listen() API).
@@ -22,12 +24,33 @@ const static_provider = @import("../providers/static.zig");
 /// returns, writing from a shallower stack frame. Responses use a
 /// dynamic body path so PNG and badge-group payloads are handled
 /// without a fixed contiguous buffer.
+
+/// Parse the max dimension from an SVG viewBox string like "0 0 100 100" or "0 1 100 97.53".
+/// Returns 24.0 if parsing fails (matching inline icon default).
+fn parseViewBoxSize(view_box: ?[]const u8) f32 {
+    const vb = view_box orelse return 24.0;
+    // Split by space, take last two (width, height), return max
+    var it = std.mem.tokenizeScalar(u8, vb, ' ');
+    var w: f32 = 24.0;
+    var h: f32 = 24.0;
+    var i: u8 = 0;
+    while (it.next()) |part| : (i += 1) {
+        if (i == 2) w = std.fmt.parseFloat(f32, part) catch 24.0;
+        if (i == 3) h = std.fmt.parseFloat(f32, part) catch 24.0;
+    }
+    return @max(w, h);
+}
+
 pub const Server = struct {
     allocator: std.mem.Allocator,
     io: std.Io,
     server_fd: i32,
     memo_store: memo.MemoStore,
     token_pool: token_pool.TokenPool,
+    /// When true, all network providers (github, gitlab, npm) return "offline"
+    /// badges immediately without attempting any HTTP egress. Static badges,
+    /// memo, and group providers remain fully functional.
+    offline: bool = false,
 
     pub fn init(allocator: std.mem.Allocator, io: std.Io, host: []const u8, port: u16) !Server {
         // Create socket using raw POSIX syscalls
@@ -224,6 +247,7 @@ pub const Server = struct {
             .io = self.io,
             .memo_store = &self.memo_store,
             .token_pool = &self.token_pool,
+            .offline = self.offline,
         }, route);
         defer if (badge_data) |*bd| bd.deinit();
 
@@ -237,6 +261,9 @@ pub const Server = struct {
         const label = route.query.label orelse resolved.label;
         const value = resolved.value;
 
+        // WCAG 3.0 mode: ?wcag=3 enables APCA-compliant shade-800 colors.
+        const wcag3 = isWcag3(route.query.wcag);
+
         // Effective color: ?color= query param takes precedence over path color.
         const effective_color = route.query.color orelse resolved.color;
 
@@ -245,33 +272,110 @@ pub const Server = struct {
         const branded_color: ?[]const u8 = blk: {
             if (route.query.variant != .branded) break :blk route.query.color;
             if (effective_color) |c| {
-                if (resolveColorHex(c)) |hex| break :blk hex;
+                if (resolveColorHex(c, wcag3)) |hex| break :blk hex;
             }
             break :blk route.query.color;
         };
 
         var colors = themes.resolveTheme(route.query.variant, route.query.mode, route.query.theme, branded_color, route.query.label_color, route.query.value_color);
 
-        // Apply path color to value section for standard variants (not branded/destructive).
-        // branded: entire badge is the brand color (no split needed).
+        // Apply path color as the badge surface for standard variants.
+        // Upstream shieldcn renders a single-surface badge by default: the path
+        // color becomes the whole badge background, not just the value half.
+        // Split mode is opt-in via `?split=true`.
+        // branded: entire badge is the brand color (handled by resolveTheme).
         // destructive: always red, ignore path color.
-        var force_split = false;
         if (route.query.variant != .branded and route.query.variant != .destructive) {
             if (effective_color) |c| {
-                if (resolveColorHex(c)) |hex| {
+                if (resolveColorHex(c, wcag3)) |hex| {
+                    colors.label_bg = hex;
                     colors.value_bg = hex;
-                    force_split = true;
-                    // Auto-select value text color (white/dark) for contrast
+                    // Auto-select value text color (white/dark) for contrast.
+                    // In WCAG 3.0 mode, use APCA-based selection.
                     if (route.query.value_color == null) {
                         if (hex_util.parseHex(hex)) |rgb| {
-                            colors.value_fg = contrast.autoForeground(rgb);
+                            colors.value_fg = if (wcag3)
+                                contrast.autoForegroundApca(rgb)
+                            else
+                                contrast.autoForeground(rgb);
+                            colors.label_fg = colors.value_fg;
                         }
                     }
                 }
+            } else if (route.query.split) {
+                // Split mode without a path color: label bg = secondary, value bg = border.
+                colors.label_bg = "#27272a";
+                colors.value_bg = "#3f3f46";
+                colors.label_fg = "#fafafa";
+                colors.value_fg = "#fafafa";
             }
         }
 
         const preset = types.getSizePreset(route.query.size);
+
+        // Auto-icon resolution: pick a default icon based on provider/topic
+        // when no ?logo= is supplied. User logo takes precedence.
+        // Handles both inline icons (24×24 paths) and embedded SVGs (multi-path).
+        const topic: ?[]const u8 = if (route.segments.len > 1) route.segments[1] else null;
+        const is_dark = route.query.mode == .dark;
+        var icon_path: ?[]const u8 = null;
+        var icon_paths: ?[]types.IconPathData = null;
+        var icon_viewbox_size: f32 = 24.0;
+        var embedded_parsed: ?icon_resolver.ParsedSvg = null;
+        {
+            // Determine the slug to look up (user logo or auto-icon)
+            const inline_slug: ?[]const u8 = blk: {
+                if (route.query.logo) |logo| {
+                    if (auto_icons.getInlineIcon(logo)) |_| break :blk logo;
+                    // Try embedded for user logo
+                    if (icon_resolver.resolveIcon(logo, is_dark)) |svg_raw| {
+                        embedded_parsed = icon_resolver.parseSvgPaths(self.allocator, svg_raw) catch null;
+                        if (embedded_parsed) |*parsed| {
+                            if (parsed.paths.items.len > 0) {
+                                icon_viewbox_size = parseViewBoxSize(parsed.view_box);
+                            }
+                        }
+                        break :blk null;
+                    }
+                    break :blk null;
+                }
+                // Auto-icon based on provider/topic
+                if (auto_icons.resolveAutoIcon(route.provider, topic)) |result| {
+                    if (result.inline_slug) |slug| break :blk slug;
+                    if (result.embedded_slug) |slug| {
+                        if (icon_resolver.resolveIcon(slug, is_dark)) |svg_raw| {
+                            embedded_parsed = icon_resolver.parseSvgPaths(self.allocator, svg_raw) catch null;
+                            if (embedded_parsed) |*parsed| {
+                                if (parsed.paths.items.len > 0) {
+                                    icon_viewbox_size = parseViewBoxSize(parsed.view_box);
+                                }
+                            }
+                        }
+                        break :blk null;
+                    }
+                }
+                break :blk null;
+            };
+            if (inline_slug) |slug| {
+                if (auto_icons.getInlineIcon(slug)) |p| icon_path = p;
+            }
+            // Convert embedded parsed paths to IconPathData array
+            if (embedded_parsed) |*parsed| {
+                if (parsed.paths.items.len > 0) {
+                    const arr = self.allocator.alloc(types.IconPathData, parsed.paths.items.len) catch null;
+                    if (arr) |a| {
+                        for (parsed.paths.items, 0..) |p, i| {
+                            a[i] = .{ .d = p.d, .fill = p.fill };
+                        }
+                        icon_paths = a;
+                    }
+                }
+            }
+        }
+        // Cleanup embedded icon allocations after rendering.
+        defer if (embedded_parsed) |*parsed| parsed.deinit(self.allocator);
+        defer if (icon_paths) |arr| self.allocator.free(arr);
+
         const config = types.BadgeConfig{
             .label = label,
             .value = value,
@@ -280,7 +384,7 @@ pub const Server = struct {
             .size = route.query.size,
             .mode = route.query.mode,
             .font = route.query.font,
-            .split = route.query.split or force_split,
+            .split = route.query.split,
             .status_dot = route.query.status_dot,
             .status_color = null,
             .value_color = route.query.value_color,
@@ -295,8 +399,11 @@ pub const Server = struct {
             .label_gap = route.query.label_gap orelse preset.label_gap,
             .brand_color = route.query.color,
             .gradient = route.query.gradient,
-            .icon = null,
+            .icon = icon_path,
             .icon_fill = null,
+            .icon_fill_opacity = if (icon_path != null or icon_paths != null) 0.85 else null,
+            .icon_paths = icon_paths,
+            .icon_viewbox_size = icon_viewbox_size,
         };
 
         if (std.mem.eql(u8, route.format, "svg")) {
@@ -354,7 +461,14 @@ pub const Server = struct {
         const preset = types.getSizePreset(route.query.size);
 
         var configs: std.ArrayList(types.BadgeConfig) = .empty;
-        defer configs.deinit(self.allocator);
+        defer {
+            // Free duped label/value strings before freeing the list.
+            for (configs.items) |c| {
+                self.allocator.free(c.label);
+                self.allocator.free(c.value);
+            }
+            configs.deinit(self.allocator);
+        }
 
         for (spec_list.items) |spec| {
             // Reuse the static badge parser: it expects segments[1] = spec.
@@ -362,31 +476,25 @@ pub const Server = struct {
             var bd = static_provider.parseStaticBadge(self.allocator, &segs) catch types.BadgeData{ .label = "badge", .value = "invalid" };
             defer bd.deinit();
 
-            // Per-badge color override (named color or hex) on the value side.
-            var badge_colors = colors;
-            var force_split = false;
-            if (bd.color) |c| {
-                if (resolveColorHex(c)) |hex| {
-                    badge_colors.value_bg = hex;
-                    force_split = true;
-                    // Auto-select value text color (white/dark) for contrast
-                    if (route.query.value_color == null) {
-                        if (hex_util.parseHex(hex)) |rgb| {
-                            badge_colors.value_fg = contrast.autoForeground(rgb);
-                        }
-                    }
-                }
-            }
+            // Group badges use a shared background (default variant) — per-spec
+            // colors are ignored in horizontal group mode, matching upstream.
+            const badge_colors = colors;
+
+            // Dupe label/value — bd.deinit() frees the originals at loop end.
+            const label_owned = try self.allocator.dupe(u8, bd.label);
+            errdefer self.allocator.free(label_owned);
+            const value_owned = try self.allocator.dupe(u8, bd.value);
+            errdefer self.allocator.free(value_owned);
 
             try configs.append(self.allocator, .{
-                .label = bd.label,
-                .value = bd.value,
+                .label = label_owned,
+                .value = value_owned,
                 .colors = badge_colors,
                 .style = route.query.variant,
                 .size = route.query.size,
                 .mode = route.query.mode,
                 .font = route.query.font,
-                .split = route.query.split or force_split,
+                .split = route.query.split,
                 .status_dot = route.query.status_dot,
                 .label_opacity = route.query.label_opacity,
                 .height = route.query.height orelse preset.height,
@@ -465,30 +573,48 @@ fn respondError(allocator: std.mem.Allocator, fd: i32, label: []const u8, value:
     respond(fd, 200, "image/svg+xml", svg_body);
 }
 
-/// Resolve a shields.io-style color name (or hex) to a hex string.
+/// Check if ?wcag=3 is set (WCAG 3.0 APCA compliance mode).
+fn isWcag3(wcag: ?[]const u8) bool {
+    if (wcag) |w| {
+        return std.mem.eql(u8, w, "3") or eqlIgnoreCase(w, "3") or eqlIgnoreCase(w, "true");
+    }
+    return false;
+}
+
+fn eqlIgnoreCase(a: []const u8, b: []const u8) bool {
+    if (a.len != b.len) return false;
+    for (a, b) |ca, cb| {
+        if (std.ascii.toLower(ca) != std.ascii.toLower(cb)) return false;
+    }
+    return true;
+}
+
+/// Resolve a color name (or hex) to a hex string.
+/// Uses shadcn/tailwind token values matching upstream shieldcn.
+/// When `wcag3` is true, returns darker shade-800 variants that meet
+/// WCAG 3.0 APCA |Lc| >= 60 for non-body text with white foreground.
 /// Returns null if the name is unrecognized and not a valid hex.
-fn resolveColorHex(name: []const u8) ?[]const u8 {
-    const Named = struct { n: []const u8, h: []const u8 };
+fn resolveColorHex(name: []const u8, wcag3: bool) ?[]const u8 {
+    const Named = struct { n: []const u8, h600: []const u8, h800: []const u8 };
     const map = [_]Named{
-        .{ .n = "brightgreen", .h = "#4c1" },
-        .{ .n = "green", .h = "#97ca00" },
-        .{ .n = "success", .h = "#97ca00" },
-        .{ .n = "yellow", .h = "#dfb317" },
-        .{ .n = "yellowgreen", .h = "#a4a61d" },
-        .{ .n = "orange", .h = "#fe7d37" },
-        .{ .n = "red", .h = "#e05d44" },
-        .{ .n = "critical", .h = "#e05d44" },
-        .{ .n = "blue", .h = "#007ec6" },
-        .{ .n = "informational", .h = "#007ec6" },
-        .{ .n = "blueviolet", .h = "#8a2be2" },
-        .{ .n = "purple", .h = "#8a2be2" },
-        .{ .n = "lightgrey", .h = "#9f9f9f" },
-        .{ .n = "grey", .h = "#555" },
-        .{ .n = "gray", .h = "#555" },
-        .{ .n = "important", .h = "#fe7d37" },
+        .{ .n = "brightgreen", .h600 = "#4c1", .h800 = "#166534" },
+        .{ .n = "green", .h600 = "#16a34a", .h800 = "#166534" },
+        .{ .n = "success", .h600 = "#16a34a", .h800 = "#166534" },
+        .{ .n = "yellow", .h600 = "#d97706", .h800 = "#92400e" },
+        .{ .n = "yellowgreen", .h600 = "#a3e635", .h800 = "#92400e" },
+        .{ .n = "orange", .h600 = "#ea580c", .h800 = "#9a3412" },
+        .{ .n = "red", .h600 = "#dc2626", .h800 = "#991b1b" },
+        .{ .n = "critical", .h600 = "#dc2626", .h800 = "#991b1b" },
+        .{ .n = "blue", .h600 = "#2563eb", .h800 = "#1e40af" },
+        .{ .n = "informational", .h600 = "#2563eb", .h800 = "#1e40af" },
+        .{ .n = "purple", .h600 = "#9333ea", .h800 = "#6b21a8" },
+        .{ .n = "lightgrey", .h600 = "#9ca3af", .h800 = "#1f2937" },
+        .{ .n = "grey", .h600 = "#6b7280", .h800 = "#1f2937" },
+        .{ .n = "gray", .h600 = "#6b7280", .h800 = "#1f2937" },
+        .{ .n = "important", .h600 = "#ea580c", .h800 = "#9a3412" },
     };
     for (map) |m| {
-        if (std.mem.eql(u8, m.n, name)) return m.h;
+        if (std.mem.eql(u8, m.n, name)) return if (wcag3) m.h800 else m.h600;
     }
     // Treat as hex if it starts with '#' or is 3/6 hex digits.
     if (name.len > 0 and name[0] == '#') return name;
@@ -500,7 +626,6 @@ fn resolveColorHex(name: []const u8) ?[]const u8 {
             }
         }
         // Bare hex without '#' — prepend '#' so SVG fill attribute works.
-        // Use a static buffer pool since we need to return a pointer.
         const HexBuf = struct { var buf: [8]u8 = .{ '#', 0, 0, 0, 0, 0, 0, 0 }; };
         HexBuf.buf[0] = '#';
         @memcpy(HexBuf.buf[1 .. 1 + name.len], name);

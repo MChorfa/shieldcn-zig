@@ -20,6 +20,7 @@ pub fn main(init: std.process.Init) !void {
     if (std.mem.eql(u8, command, "serve")) {
         var host: []const u8 = "127.0.0.1";
         var port: u16 = 5335;
+        var offline: bool = false;
 
         while (args_it.next()) |arg| {
             if (std.mem.eql(u8, arg, "--host")) {
@@ -27,11 +28,15 @@ pub fn main(init: std.process.Init) !void {
             } else if (std.mem.eql(u8, arg, "--port")) {
                 const port_arg = args_it.next() orelse break;
                 port = std.fmt.parseInt(u16, port_arg, 10) catch 5335;
+            } else if (std.mem.eql(u8, arg, "--offline")) {
+                offline = true;
             }
         }
 
         var server = try http_server.Server.init(allocator, init.io, host, port);
         defer server.deinit();
+        server.offline = offline;
+        if (offline) std.log.info("offline mode: network providers disabled", .{});
         try server.listen();
     } else if (std.mem.eql(u8, command, "help") or std.mem.eql(u8, command, "--help") or std.mem.eql(u8, command, "-h")) {
         printUsage();
@@ -49,6 +54,7 @@ fn printUsage() void {
         \\  serve                      Start the badge HTTP server
         \\    --host <ip>              Bind address (default: 127.0.0.1)
         \\    --port <num>             Port (default: 5335)
+        \\    --offline                Disable all network providers (air-gap mode)
         \\  help                     Show this help message
         \\
     , .{});

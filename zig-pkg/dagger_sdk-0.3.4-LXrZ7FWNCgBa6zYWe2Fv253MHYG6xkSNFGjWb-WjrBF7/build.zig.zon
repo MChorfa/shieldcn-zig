@@ -1,0 +1,30 @@
+.{
+    .fingerprint = 0x21a2709aecd97a2d,
+    .name = .dagger_sdk,
+    .version = "0.3.4",
+    // Zig 0.16 is the baseline. 0.16 shipped April 13 2026 with the new
+    // std.Io interface, Juicy Main (std.process.Init), and first-class
+    // cancellation. Targeting 0.16 directly means:
+    //   - we propagate Io through our Client (so callers control blocking)
+    //   - we get Future/Group for free when users want concurrent pipelines
+    //   - we never have to port from 0.15 (which would be the biggest stdlib
+    //     churn in Zig's history)
+    .minimum_zig_version = "0.16.0",
+
+    // No external dependencies. This is intentional: the SDK links only against
+    // Zig's stdlib so it can be vendored into air-gapped MChorfa environments
+    // (see CortAIx §3.1) without a dependency audit.
+    .dependencies = .{},
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "sdk/lib/src",
+        "sdk/lib/build.zig",
+        "sdk/lib/build.zig.zon",
+        "codegen",
+        "examples",
+        "LICENSE",
+        "README.md",
+    },
+}

@@ -25,12 +25,20 @@ pub const Rgb = struct {
 
 pub fn parseHex(hex_str: []const u8) ?Rgb {
     const h = if (hex_str.len > 0 and hex_str[0] == '#') hex_str[1..] else hex_str;
-    if (h.len != 6) return null;
-
-    const r = std.fmt.parseInt(u8, h[0..2], 16) catch return null;
-    const g = std.fmt.parseInt(u8, h[2..4], 16) catch return null;
-    const b = std.fmt.parseInt(u8, h[4..6], 16) catch return null;
-    return .{ .r = r, .g = g, .b = b };
+    if (h.len == 6) {
+        const r = std.fmt.parseInt(u8, h[0..2], 16) catch return null;
+        const g = std.fmt.parseInt(u8, h[2..4], 16) catch return null;
+        const b = std.fmt.parseInt(u8, h[4..6], 16) catch return null;
+        return .{ .r = r, .g = g, .b = b };
+    }
+    if (h.len == 3) {
+        // Expand 3-digit hex: #4c1 -> #44cc11
+        const r = std.fmt.parseInt(u4, h[0..1], 16) catch return null;
+        const g = std.fmt.parseInt(u4, h[1..2], 16) catch return null;
+        const b = std.fmt.parseInt(u4, h[2..3], 16) catch return null;
+        return .{ .r = @as(u8, r) * 17, .g = @as(u8, g) * 17, .b = @as(u8, b) * 17 };
+    }
+    return null;
 }
 
 // ------------------------------------------------------------------

@@ -40,7 +40,7 @@ pub const ThemePalette = struct {
     secondary: []const u8 = "#27272a",
     secondary_foreground: []const u8 = "#fafafa",
     destructive: []const u8 = "#dc2626",
-    destructive_foreground: []const u8 = "#ffffff",
+    destructive_foreground: []const u8 = "#fff",
     accent: []const u8 = "#27272a",
     accent_foreground: []const u8 = "#fafafa",
     background: []const u8 = "#09090b",
@@ -61,7 +61,7 @@ pub const dark_theme: ThemePalette = .{
     .secondary = "#27272a",
     .secondary_foreground = "#fafafa",
     .destructive = "#dc2626",
-    .destructive_foreground = "#ffffff",
+    .destructive_foreground = "#fff",
     .accent = "#27272a",
     .accent_foreground = "#fafafa",
     .background = "#09090b",
@@ -78,7 +78,7 @@ pub const light_theme: ThemePalette = .{
     .secondary = "#f4f4f5",
     .secondary_foreground = "#18181b",
     .destructive = "#dc2626",
-    .destructive_foreground = "#ffffff",
+    .destructive_foreground = "#fff",
     .accent = "#f4f4f5",
     .accent_foreground = "#18181b",
     .background = "#fafafa",
@@ -92,20 +92,20 @@ pub const light_theme: ThemePalette = .{
 /// High-contrast theme: WCAG AAA compliant for all combinations.
 /// Uses pure black/white extremes and saturated accents.
 pub const high_contrast_theme: ThemePalette = .{
-    .primary = "#ffffff",
+    .primary = "#fff",
     .primary_foreground = "#000000",
     .secondary = "#000000",
-    .secondary_foreground = "#ffffff",
+    .secondary_foreground = "#fff",
     .destructive = "#990000",
-    .destructive_foreground = "#ffffff",
+    .destructive_foreground = "#fff",
     .accent = "#ffff00",
     .accent_foreground = "#000000",
     .background = "#000000",
-    .foreground = "#ffffff",
-    .border = "#ffffff",
-    .input = "#ffffff",
+    .foreground = "#fff",
+    .border = "#fff",
+    .input = "#fff",
     .muted = "#333333",
-    .muted_foreground = "#ffffff",
+    .muted_foreground = "#fff",
 };
 
 fn getPalette(theme: ThemeName) ThemePalette {
@@ -230,12 +230,6 @@ pub fn resolveTheme(
         .border = style.border,
     };
 
-    // For outline variant, ensure bg is the mode background
-    if (variant == .outline) {
-        result.label_bg = palette.background;
-        result.value_bg = palette.background;
-    }
-
     // For ghost variant, transparent background
     if (variant == .ghost) {
         result.label_bg = "transparent";
@@ -264,24 +258,26 @@ fn resolveButtonStyle(variant: types.BadgeStyle, palette: *const ThemePalette, c
     const radius: u32 = 6;
 
     return switch (variant) {
-        // default: standard gray badge (shields.io convention)
+        // default: light badge with dark text (upstream shieldcn default).
+        // Maps to shadcn primary: bg=#fafafa, fg=#18181b (dark theme).
         .default => .{
-            .bg = palette.secondary,
-            .fg = palette.secondary_foreground,
-            .border = null,
-            .border_radius = radius,
-        },
-        // secondary: high-contrast inverted badge (shadcn primary button)
-        .secondary => .{
             .bg = palette.primary,
             .fg = palette.primary_foreground,
             .border = null,
             .border_radius = radius,
         },
+        // secondary: dark badge with light text (shadcn secondary button).
+        // Maps to shadcn secondary: bg=#27272a, fg=#fafafa (dark theme).
+        .secondary => .{
+            .bg = palette.secondary,
+            .fg = palette.secondary_foreground,
+            .border = null,
+            .border_radius = radius,
+        },
         .outline => .{
-            .bg = palette.background,
+            .bg = palette.primary,
             .fg = palette.foreground,
-            .border = custom_color orelse palette.border,
+            .border = "#3f3f46",
             .border_radius = radius,
         },
         .ghost => .{
@@ -300,7 +296,7 @@ fn resolveButtonStyle(variant: types.BadgeStyle, palette: *const ThemePalette, c
             const brand = custom_color orelse palette.primary;
             const brand_rgb = hex_util.parseHex(brand) orelse hex_util.parseHex("#27272a").?;
             const is_light_brand = hex_util.isLight(brand_rgb);
-            const brand_fg = if (is_light_brand) "#18181b" else "#ffffff";
+            const brand_fg = if (is_light_brand) "#18181b" else "#fff";
             break :blk .{
                 .bg = brand,
                 .fg = brand_fg,
@@ -325,32 +321,32 @@ pub fn resolveDefault(variant: types.BadgeStyle, mode: types.ColorMode) types.Re
 
 test "resolveDefault default dark" {
     const colors = resolveDefault(.default, .dark);
-    try std.testing.expectEqualStrings("#27272a", colors.label_bg);
-    try std.testing.expectEqualStrings("#fafafa", colors.label_fg);
-}
-
-test "resolveDefault secondary dark" {
-    const colors = resolveDefault(.secondary, .dark);
     try std.testing.expectEqualStrings("#fafafa", colors.label_bg);
     try std.testing.expectEqualStrings("#18181b", colors.label_fg);
 }
 
+test "resolveDefault secondary dark" {
+    const colors = resolveDefault(.secondary, .dark);
+    try std.testing.expectEqualStrings("#27272a", colors.label_bg);
+    try std.testing.expectEqualStrings("#fafafa", colors.label_fg);
+}
+
 test "resolveDefault outline dark" {
     const colors = resolveDefault(.outline, .dark);
-    try std.testing.expectEqualStrings("#09090b", colors.label_bg);
-    try std.testing.expectEqualStrings("#27272a", colors.border.?);
+    try std.testing.expectEqualStrings("#fafafa", colors.label_bg);
+    try std.testing.expectEqualStrings("#3f3f46", colors.border.?);
 }
 
 test "resolveDefault branded with color" {
     const colors = resolveTheme(.branded, .dark, null, "#ff6b6b", null, null);
     try std.testing.expectEqualStrings("#ff6b6b", colors.label_bg);
-    try std.testing.expectEqualStrings("#ffffff", colors.label_fg);
+    try std.testing.expectEqualStrings("#fff", colors.label_fg);
 }
 
 test "resolveDefault light mode" {
     const colors = resolveDefault(.default, .light);
-    try std.testing.expectEqualStrings("#f4f4f5", colors.label_bg);
-    try std.testing.expectEqualStrings("#18181b", colors.label_fg);
+    try std.testing.expectEqualStrings("#18181b", colors.label_bg);
+    try std.testing.expectEqualStrings("#fafafa", colors.label_fg);
 }
 
 test "high-contrast theme meets AAA" {
@@ -361,18 +357,18 @@ test "high-contrast theme meets AAA" {
 test "enterprise theme builder" {
     const overrides = EnterpriseOverrides{
         .primary = "#0052cc",
-        .primary_foreground = "#ffffff",
+        .primary_foreground = "#fff",
     };
     const enterprise = buildEnterpriseTheme(dark_theme, overrides);
     try std.testing.expectEqualStrings("#0052cc", enterprise.primary);
-    try std.testing.expectEqualStrings("#ffffff", enterprise.primary_foreground);
+    try std.testing.expectEqualStrings("#fff", enterprise.primary_foreground);
     try std.testing.expectEqualStrings("#27272a", enterprise.secondary);
 }
 
 test "autoCorrect fixes low contrast" {
     var palette = ThemePalette{
         .primary = "#eeeeee",
-        .primary_foreground = "#ffffff",
+        .primary_foreground = "#fff",
     };
     autoCorrectPalette(&palette);
     const bg = hex_util.parseHex("#eeeeee").?;
