@@ -11,7 +11,7 @@
   <a href="https://github.com/MChorfa/shieldcn-zig/stargazers"><img src="https://shieldcn.dev/github/stars/MChorfa/shieldcn-zig.svg?variant=secondary" alt="GitHub stars" /></a>
   <a href="https://github.com/MChorfa/shieldcn-zig/network/members"><img src="https://shieldcn.dev/github/forks/MChorfa/shieldcn-zig.svg?variant=secondary" alt="GitHub forks" /></a>
   <a href="https://github.com/MChorfa/shieldcn-zig/blob/main/LICENSE"><img src="https://shieldcn.dev/github/license/MChorfa/shieldcn-zig.svg?variant=secondary" alt="License" /></a>
-  <a href="https://github.com/MChorfa/shieldcn-zig/actions/workflows/dagger.yaml"><img src="https://shieldcn.dev/github/ci/MChorfa/shieldcn-zig.svg?workflow=Dagger%20CI&branch=main&variant=secondary" alt="CI status" /></a>
+  <a href="https://github.com/MChorfa/shieldcn-zig/actions/workflows/dagger.yaml"><img src="https://shieldcn.dev/github/ci/MChorfa/shieldcn-zig.svg?workflow=dagger.yaml&branch=main&variant=secondary" alt="Dagger CI" /></a>
   <a href="https://github.com/MChorfa/shieldcn-zig/commits/main"><img src="https://shieldcn.dev/github/last-commit/MChorfa/shieldcn-zig.svg?variant=secondary" alt="Last commit" /></a>
   <a href="https://github.com/MChorfa/shieldcn-zig/issues"><img src="https://shieldcn.dev/github/issues/MChorfa/shieldcn-zig.svg?variant=secondary" alt="Issues" /></a>
   <a href="https://github.com/MChorfa/shieldcn-zig/graphs/contributors"><img src="https://shieldcn.dev/github/contributors/MChorfa/shieldcn-zig.svg?variant=secondary" alt="Contributors" /></a>
