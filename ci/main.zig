@@ -72,20 +72,34 @@ const ShieldcnModule = struct {
         const binary = try build_out.file("./bin/shieldcn");
 
         var base = try ctx.container();
-        base = try base.from(runtime_image);
-        base = try base.withFile("/usr/bin/shieldcn", binary, .{});
-        base = try base.withExec(&.{
+        base = try base.from(runtime_image, null);
+        base = try mountFile(base, "/usr/bin/shieldcn", binary);
+        base = try exec(base, &.{
             "apk",
             "add",
             "--no-cache",
             "freetype",
             "sqlite-libs",
-        }, .{});
-        base = try base.withEntrypoint(&.{"/usr/bin/shieldcn"}, .{});
+        });
+        base = try base.withEntrypoint(&.{"/usr/bin/shieldcn"}, null);
 
         return base;
     }
 };
+
+fn exec(ctr: dagger.Container, args: []const []const u8) !dagger.Container {
+    return ctr.withExec(args, null, null, null, null, null, null, null, null, null, null);
+}
+
+fn mountDir(ctr: dagger.Container, path: []const u8, dir: dagger.Directory) !dagger.Container {
+    const dir_id = try dir.id();
+    return ctr.withDirectory(path, dir_id.value, null, null, null, null, null, null);
+}
+
+fn mountFile(ctr: dagger.Container, path: []const u8, file: dagger.File) !dagger.Container {
+    const file_id = try file.id();
+    return ctr.withFile(path, file_id.value, null, null, null);
+}
 
 /// Build for a musl target and return the `zig-out` directory.
 fn buildForTarget(
@@ -94,7 +108,7 @@ fn buildForTarget(
     target: []const u8,
 ) !dagger.Directory {
     const ctr = try buildContainer(ctx, src, target);
-    return ctr.directory("./zig-out", .{});
+    return ctr.directory("./zig-out", null);
 }
 
 /// Return a container that has the source mounted and the build step executed.
@@ -105,9 +119,9 @@ fn buildContainer(
     target: ?[]const u8,
 ) !dagger.Container {
     var ctr = try ctx.container();
-    ctr = try ctr.from(base_image);
+    ctr = try ctr.from(base_image, null);
 
-    ctr = try ctr.withExec(&.{
+    ctr = try exec(ctr, &.{
         "sh",
         "-c",
         "apk add --no-cache curl tar xz git ca-certificates && " ++
@@ -119,17 +133,17 @@ fn buildContainer(
         "curl -L https://ziglang.org/download/" ++ zig_version ++ "/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ ".tar.xz | tar -xJ -C /usr/local && " ++
         "ln -s /usr/local/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ "/zig /usr/local/bin/zig && " ++
         "zig version",
-    }, .{});
+    });
 
-    ctr = try ctr.withDirectory("/src-ro", src, .{});
-    ctr = try ctr.withWorkdir("/src-ro", .{});
+    ctr = try mountDir(ctr, "/src-ro", src);
+    ctr = try ctr.withWorkdir("/src-ro", null);
 
-    ctr = try ctr.withExec(&.{
+    ctr = try exec(ctr, &.{
         "sh",
         "-c",
         "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied",
-    }, .{});
-    ctr = try ctr.withWorkdir("/tmp/build", .{});
+    });
+    ctr = try ctr.withWorkdir("/tmp/build", null);
 
     const args: []const []const u8 = if (target) |t| b: {
         const target_arg = try std.fmt.allocPrint(ctx.allocator(), "-Dtarget={s}", .{t});
@@ -145,7 +159,7 @@ fn buildContainer(
         "check",
     };
 
-    return ctr.withExec(args, .{});
+    return exec(ctr, args);
 }
 
 pub fn main(init: std.process.Init) !void {

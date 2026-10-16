@@ -26,9 +26,7 @@ pub fn build(b: *std.Build) void {
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    addPassthru(b, run_cmd);
 
     const run_step = b.step("run", "Run shieldcn server");
     run_step.dependOn(&run_cmd.step);
@@ -82,4 +80,17 @@ pub fn build(b: *std.Build) void {
         .root_module = ci_mod,
     });
     b.installArtifact(ci_exe);
+
+    const ci_step = b.step("ci", "Build Dagger CI module");
+    ci_step.dependOn(&ci_exe.step);
+}
+
+fn addPassthru(b: *std.Build, run: *std.Build.Step.Run) void {
+    if (comptime @hasDecl(std.Build.Step.Run, "addPassthruArgs")) {
+        run.addPassthruArgs();
+    } else if (comptime @hasField(std.Build, "args")) {
+        if (@field(b, "args")) |args| {
+            run.addArgs(args);
+        }
+    }
 }

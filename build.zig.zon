@@ -9,8 +9,8 @@
             .hash = "zigimg-0.1.0-8_eo2mHBFwDLhWjXriR17_b7VF6qML1f98Xokp7ZZbop",
         },
         .dagger_sdk = .{
-            .url = "git+https://github.com/MChorfa/dagger-zig#v0.3.5",
-            .hash = "dagger_sdk-0.3.4-LXrZ7FWNCgBa6zYWe2Fv253MHYG6xkSNFGjWb-WjrBF7",
+            .url = "git+https://github.com/MChorfa/dagger-zig#v0.4.0",
+            .hash = "dagger_sdk-0.3.5-LXrZ7GawGACw8A-ST4QbS4wFrBflzYwGM22R1ZcMSKVQ",
         },
     },
     .paths = .{
