@@ -69,28 +69,21 @@ const ShieldcnModule = struct {
             return error.InvalidArch;
 
         const build_out = try buildForTarget(ctx, src, target);
-        const binary = try (try build_out.file("./bin/shieldcn")).id();
+        const binary = try build_out.file("./bin/shieldcn");
 
-        const alpine = try ctx.dag().container(null);
-        const base = try alpine.from(runtime_image, null);
-
-        const with_bin = try base.withFile(
-            "/usr/bin/shieldcn",
-            binary.value,
-            null,
-            null,
-            null,
-        );
-        const with_deps = try with_bin.withExec(&.{
+        var base = try ctx.container();
+        base = try base.from(runtime_image);
+        base = try base.withFile("/usr/bin/shieldcn", binary, .{});
+        base = try base.withExec(&.{
             "apk",
             "add",
             "--no-cache",
             "freetype",
             "sqlite-libs",
-        }, null, null, null, null, null, null, null, null, null, null);
-        const with_entry = try with_deps.withEntrypoint(&.{"/usr/bin/shieldcn"}, null);
+        }, .{});
+        base = try base.withEntrypoint(&.{"/usr/bin/shieldcn"}, .{});
 
-        return with_entry;
+        return base;
     }
 };
 
@@ -101,8 +94,7 @@ fn buildForTarget(
     target: []const u8,
 ) !dagger.Directory {
     const ctr = try buildContainer(ctx, src, target);
-    const out = try ctr.directory("./zig-out", null);
-    return out;
+    return ctr.directory("./zig-out", .{});
 }
 
 /// Return a container that has the source mounted and the build step executed.
@@ -112,12 +104,10 @@ fn buildContainer(
     src: dagger.Directory,
     target: ?[]const u8,
 ) !dagger.Container {
-    const src_id = (try src.id()).value;
+    var ctr = try ctx.container();
+    ctr = try ctr.from(base_image);
 
-    const base_ctr = try ctx.dag().container(null);
-    const base = try base_ctr.from(base_image, null);
-
-    const with_deps = try base.withExec(&.{
+    ctr = try ctr.withExec(&.{
         "sh",
         "-c",
         "apk add --no-cache curl tar xz git ca-certificates && " ++
@@ -129,17 +119,17 @@ fn buildContainer(
         "curl -L https://ziglang.org/download/" ++ zig_version ++ "/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ ".tar.xz | tar -xJ -C /usr/local && " ++
         "ln -s /usr/local/zig-${ZIG_ARCH}-linux-" ++ zig_version ++ "/zig /usr/local/bin/zig && " ++
         "zig version",
-    }, null, null, null, null, null, null, null, null, null, null);
+    }, .{});
 
-    const with_src = try with_deps.withDirectory("/src-ro", src_id, null, null, null, null, null, null);
-    const workdir = try with_src.withWorkdir("/src-ro", null);
+    ctr = try ctr.withDirectory("/src-ro", src, .{});
+    ctr = try ctr.withWorkdir("/src-ro", .{});
 
-    const prep = try workdir.withExec(&.{
+    ctr = try ctr.withExec(&.{
         "sh",
         "-c",
         "mkdir -p /tmp/build && cd /src-ro && tar cf - . | (cd /tmp/build && tar xf -) && rm -rf /tmp/build/zig-out && echo copied",
-    }, null, null, null, null, null, null, null, null, null, null);
-    const build_src = try prep.withWorkdir("/tmp/build", null);
+    }, .{});
+    ctr = try ctr.withWorkdir("/tmp/build", .{});
 
     const args: []const []const u8 = if (target) |t| b: {
         const target_arg = try std.fmt.allocPrint(ctx.allocator(), "-Dtarget={s}", .{t});
@@ -155,7 +145,7 @@ fn buildContainer(
         "check",
     };
 
-    return build_src.withExec(args, null, null, null, null, null, null, null, null, null, null);
+    return ctr.withExec(args, .{});
 }
 
 pub fn main(init: std.process.Init) !void {
